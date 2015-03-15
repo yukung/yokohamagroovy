@@ -57,3 +57,21 @@
     * 例えば dependencies に追加する際にある条件でフィルタしたい場合など
 
 ## 3.9 制御構造
+
+# 第4章
+
+## Groovy API
+
+* groovy-all.jar 使うと、ant が入ってない環境でも AntBuilder 使うと ant を扱える
+* StreamingMarkupBuilder 便利
+* XmlUtil 便利
+* DataSet は AST 変換で SQL を作って実行する
+
+## Groovy JDK
+
+* Category を使うとその中でだけ DSL っぽく書ける
+    * TimeCategory など
+* Groovy In Action に、MOP のメソッドの優先順位の図が載っている
+* Java のメソッドは後回し
+* GroovyInterceptable を実装してると優先順位が上がる
+

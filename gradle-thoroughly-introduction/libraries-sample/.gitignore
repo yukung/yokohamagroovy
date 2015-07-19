@@ -1,3 +1,6 @@
+# Excluded for automatic generated code
+src/generated/
+
 # Created by https://www.gitignore.io
 
 ### Java ###

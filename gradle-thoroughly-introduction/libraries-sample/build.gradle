@@ -18,6 +18,7 @@ apply plugin: 'spring-boot'
 
 ext {
     javaVersion = 1.8
+    lombokVersion = '1.16.4'
 }
 
 jar {
@@ -28,6 +29,16 @@ jar {
 sourceCompatibility = javaVersion
 targetCompatibility = javaVersion
 tasks.withType(JavaCompile)*.options*.encoding = 'UTF-8'
+
+configurations {
+    provided
+}
+
+sourceSets {
+    main.compileClasspath += configurations.provided
+    test.compileClasspath += configurations.provided
+    test.runtimeClasspath += configurations.provided
+}
 
 repositories {
     mavenCentral()
@@ -40,6 +51,7 @@ dependencies {
     compile "org.springframework.boot:spring-boot-starter-jdbc"
     compile "org.springframework.boot:spring-boot-starter-thymeleaf"
     compile "org.springframework.boot:spring-boot-starter-web"
+    provided "org.projectlombok:lombok:${lombokVersion}"
     runtime "com.h2database:h2"
     testCompile "org.springframework.boot:spring-boot-starter-test"
 }
@@ -53,6 +65,7 @@ idea {
     module {
         downloadJavadoc = true
         downloadSources = true
+        scopes.PROVIDED.plus += [configurations.provided]
     }
 }
 

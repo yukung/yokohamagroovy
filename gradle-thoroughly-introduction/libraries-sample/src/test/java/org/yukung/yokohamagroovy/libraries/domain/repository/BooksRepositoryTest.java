@@ -11,8 +11,10 @@ import org.yukung.yokohamagroovy.libraries.App;
 import org.yukung.yokohamagroovy.libraries.domain.tables.pojos.Books;
 
 import java.time.LocalDate;
+import java.util.Arrays;
+import java.util.List;
 
-import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
 
 /**
@@ -58,5 +60,17 @@ public class BooksRepositoryTest {
         assertThat(booksRepository.findOne(created.getIsbn()), is(notNullValue()));
         booksRepository.delete(created);
         assertThat(booksRepository.findOne(created.getIsbn()), is(nullValue()));
+    }
+
+    @Test
+    @Rollback
+    public void testFindAll() throws Exception {
+        List<Books> bookses = Arrays.asList(new Books("9784101092058", "銀河鉄道の夜", LocalDate.of(1989, 6, 15)),
+                new Books("12345678901", "あいうえお", LocalDate.of(2015, 1, 1)),
+                new Books("98765432109", "かきくけこ", LocalDate.of(2047, 12, 31)));
+        bookses.forEach(booksRepository::save);
+        List<Books> result = booksRepository.findAll();
+        assertThat(result, is(notNullValue()));
+        assertThat(result, hasSize(3));
     }
 }

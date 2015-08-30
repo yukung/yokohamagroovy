@@ -7,6 +7,8 @@ import org.yukung.yokohamagroovy.libraries.domain.tables.daos.BooksDao;
 import org.yukung.yokohamagroovy.libraries.domain.tables.pojos.Books;
 import org.yukung.yokohamagroovy.libraries.domain.tables.records.BooksRecord;
 
+import java.util.List;
+
 import static org.yukung.yokohamagroovy.libraries.domain.tables.Books.BOOKS;
 
 /**
@@ -20,6 +22,10 @@ public class BooksRepository {
 
     public Books findOne(String isbn) {
         return new BooksDao(dsl.configuration()).findById(isbn);
+    }
+
+    public List<Books> findAll() {
+        return new BooksDao(dsl.configuration()).findAll();
     }
 
     public Books save(Books books) {

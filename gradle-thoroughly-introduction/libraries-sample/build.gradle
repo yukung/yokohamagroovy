@@ -66,7 +66,7 @@ dependencies {
 task jooqGenerate << {
     def writer = new StringWriter()
     def xml = new groovy.xml.MarkupBuilder(writer)
-            .configuration('xmlns': 'http://www.jooq.org/xsd/jooq-codegen-3.6.0.xsd') {
+    xml.configuration('xmlns': 'http://www.jooq.org/xsd/jooq-codegen-3.6.0.xsd') {
         jdbc() {
             driver 'org.h2.Driver'
             url 'jdbc:h2:file:/tmp/libraries'
@@ -75,10 +75,31 @@ task jooqGenerate << {
         }
         generator() {
             database() {
-                name 'org.jooq.util.h2.H2Database'
+                xml.name 'org.jooq.util.h2.H2Database'
                 includes '.*'
                 excludes 'schema_version'
                 inputSchema 'PUBLIC'
+                customTypes() {
+                    ['LocalDate', 'LocalTime', 'LocalDateTime'].each { value ->
+                        customType() {
+                            xml.name value
+                            type "java.time.$value"
+                            converter "org.yukung.yokohamagroovy.libraries.infrastructure.db.${value}Converter"
+                        }
+                    }
+                }
+                forcedTypes() {
+                    ['LocalDate'    : [/.*\.date_.*/, 'DATE'],
+                     'LocalTime'    : [/.*\.date_.*/, 'TIME'],
+                     'LocalDateTime': [/.*\.date_.*/, 'TIMESTAMP']
+                    ].each { key, value ->
+                        forcedType() {
+                            xml.name key
+                            expression value[0]
+                            types value[1]
+                        }
+                    }
+                }
             }
             generate() {
                 pojos true

@@ -49,4 +49,14 @@ public class BooksRepositoryTest {
         assertThat(result.getIsbn(), is(equalTo(created.getIsbn())));
         assertThat(result.getBookTitle(), is(equalTo(title)));
     }
+
+    @Test
+    @Rollback
+    public void testDelete() throws Exception {
+        Books books = new Books("9784101092058", "銀河鉄道の夜", LocalDate.of(1989, 6, 15));
+        Books created = booksRepository.save(books);
+        assertThat(booksRepository.findOne(created.getIsbn()), is(notNullValue()));
+        booksRepository.delete(created);
+        assertThat(booksRepository.findOne(created.getIsbn()), is(nullValue()));
+    }
 }

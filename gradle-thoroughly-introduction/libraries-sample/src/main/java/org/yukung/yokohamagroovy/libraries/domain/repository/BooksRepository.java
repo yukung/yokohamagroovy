@@ -35,4 +35,8 @@ public class BooksRepository {
         booksRecord.store();
         return booksRecord.into(Books.class);
     }
+
+    public void delete(Books books) {
+        new BooksDao(dsl.configuration()).delete(books);
+    }
 }

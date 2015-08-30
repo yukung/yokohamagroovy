@@ -1,0 +1,8 @@
+spring:
+  datasource:
+    url: jdbc:h2:file:/tmp/libraries
+  thymeleaf:
+    checkTemplateLocation: false
+
+logging:
+  level.org.jooq: DEBUG

@@ -7,6 +7,9 @@
 </head>
 <body>
 <p th:text="${message}">Hello World!</p>
+<ul th:each="book : ${books}">
+    <li><span th:text="${book.isbn}">isbn</span> : <span th:text="${book.bookTitle}">title</span> : <span th:text="${book.dateOfPublication}">date</span></li>
+</ul>
 <script src="../static/js/app.js" type="text/javascript" th:src="@{/js/app.js}"></script>
 </body>
 </html>

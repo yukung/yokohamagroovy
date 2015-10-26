@@ -1,6 +1,7 @@
 package org.yukung.yokohamagroovy.libraries.verifier;
 
 import jp.classmethod.testing.fixtures.FixtureUtils;
+import org.yukung.yokohamagroovy.libraries.entity.Author;
 import org.yukung.yokohamagroovy.libraries.entity.Book;
 import org.yukung.yokohamagroovy.libraries.entity.User;
 
@@ -41,6 +42,16 @@ public class Fixtures {
                     .field("isbn", "978-4-7981-3643-1")
                     .field("bookTitle", "Gradle徹底入門 次世代ビルドツールによる自動化基盤の構築")
                     .field("dateOfPublication", Date.valueOf(LocalDate.of(2014, 11, 4)))
+                    .returnObject();
+        }
+    }
+
+    public static class Authors {
+        public static Author author01() {
+            return FixtureUtils.injectTo(new Author())
+                    .field("authorId", 10L)
+                    .field("authorFirstname", "test")
+                    .field("authorSurname", "author1")
                     .returnObject();
         }
     }

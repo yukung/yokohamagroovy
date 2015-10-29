@@ -21,6 +21,9 @@ import static org.mockito.Mockito.*;
 @RunWith(MockitoJUnitRunner.class)
 public class BookServiceImplTest {
 
+    public static final String ISBN = "978-4-7981-3643-1";
+    public static final String BOOK_TITLE = "Gradle徹底入門 次世代ビルドツールによる自動化基盤の構築";
+    public static final LocalDate DATE_OF_PUBLICATION = LocalDate.of(2014, 11, 4);
     @InjectMocks
     private BookService service = new BookServiceImpl();
 
@@ -30,9 +33,7 @@ public class BookServiceImplTest {
     @Test
     public void testCreate() throws Exception {
         // SetUp
-        Book book = new Book("978-4-7981-3643-1",
-                "Gradle徹底入門 次世代ビルドツールによる自動化基盤の構築",
-                LocalDate.of(2014, 11, 4));
+        Book book = new Book(ISBN, BOOK_TITLE, DATE_OF_PUBLICATION);
 
         when(repository.save(book)).thenReturn(Fixtures.Books.book01());
 
@@ -41,6 +42,10 @@ public class BookServiceImplTest {
 
         // Verify
         assertThat(actual, is(notNullValue()));
+        assertThat(actual.getIsbn(), is(ISBN));
+        assertThat(actual.getBookTitle(), is(BOOK_TITLE));
+        assertThat(actual.getDateOfPublication(), is(DATE_OF_PUBLICATION));
+        verify(repository, times(1)).save(book);
     }
 
     @Test

@@ -50,7 +50,18 @@ public class BookServiceImplTest {
 
     @Test
     public void testFind() throws Exception {
-        fail();
+        // SetUp
+        when(repository.findOne(ISBN)).thenReturn(Fixtures.Books.book01());
+
+        // Exercise
+        Book actual = service.find(ISBN);
+
+        // Verify
+        assertThat(actual, is(notNullValue()));
+        assertThat(actual.getIsbn(), is(ISBN));
+        assertThat(actual.getBookTitle(), is(BOOK_TITLE));
+        assertThat(actual.getDateOfPublication(), is(DATE_OF_PUBLICATION));
+        verify(repository, times(1)).findOne(ISBN);
     }
 
     @Test

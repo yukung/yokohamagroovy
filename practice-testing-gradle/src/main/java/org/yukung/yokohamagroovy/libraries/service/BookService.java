@@ -8,7 +8,7 @@ import org.yukung.yokohamagroovy.libraries.entity.Book;
 public interface BookService {
     Book create(Book book);
 
-    Book find(Long bookId);
+    Book find(String isbn);
 
     void update(Book book);
 

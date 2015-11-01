@@ -21,7 +21,7 @@ public class BookServiceImpl implements BookService {
 
     @Override
     public Book find(String isbn) {
-        return null;
+        return repository.findOne(isbn);
     }
 
     @Override

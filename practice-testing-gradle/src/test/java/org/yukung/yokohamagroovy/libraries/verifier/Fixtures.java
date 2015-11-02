@@ -44,6 +44,14 @@ public class Fixtures {
                     .field("dateOfPublication", Date.valueOf(LocalDate.of(2014, 11, 4)))
                     .returnObject();
         }
+
+        public static Book book01_updated() {
+            return FixtureUtils.injectTo(new Book())
+                    .field("isbn", "978-4-7981-3643-1")
+                    .field("bookTitle", "更新後タイトル")
+                    .field("dateOfPublication", Date.valueOf(LocalDate.of(2015, 1, 1)))
+                    .returnObject();
+        }
     }
 
     public static class Authors {

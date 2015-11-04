@@ -90,6 +90,17 @@ public class BookServiceImplTest {
 
     @Test
     public void testDelete() throws Exception {
-        fail();
+        // SetUp
+        Book book = Fixtures.Books.book01();
+        doNothing().when(repository).delete(book.getIsbn());
+        when(repository.findOne(book.getIsbn())).thenReturn(null);
+
+        // Exercise
+        service.delete(book);
+
+        // Verify
+        Book actual = service.find(book.getIsbn());
+        assertThat(actual, is(nullValue()));
+        verify(repository, times(1)).delete(book.getIsbn());
     }
 }

@@ -57,7 +57,7 @@ public class Fixtures {
     public static class Authors {
         public static Author author01() {
             return FixtureUtils.injectTo(new Author())
-                    .field("authorId", 10L)
+                    .field("authorId", 2345L)
                     .field("authorFirstname", "test")
                     .field("authorSurname", "author1")
                     .returnObject();

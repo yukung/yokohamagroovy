@@ -1,14 +1,22 @@
 package org.yukung.yokohamagroovy.libraries.service;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 import org.yukung.yokohamagroovy.libraries.entity.Author;
+import org.yukung.yokohamagroovy.libraries.repository.AuthorsRepository;
 
 /**
  * @author yukung
  */
+@Service
 public class AuthorServiceImpl implements AuthorService {
+
+    @Autowired
+    private AuthorsRepository repository;
+
     @Override
     public Author create(Author author) {
-        return null;
+        return repository.save(author);
     }
 
     @Override

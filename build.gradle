@@ -11,9 +11,16 @@ dependencies {
 }
 
 task docsZip(type: Zip) {
-    from "build/docs"
-    into "userguide"
-    include "**/*.css", "**/*.html"
-    exclude "single.html"
-    includeEmptyDirs = false
+    into("userguide") {
+        from("build/docs") {
+            include "**/*.css", "**/*.html"
+            rename { originalName ->
+                if (originalName == "index.html")
+                    return "index-${new Date().format("yyyyMMddHHmm")}.html"
+            }
+            exclude "single.html"
+            includeEmptyDirs = false
+        }
+
+    }
 }

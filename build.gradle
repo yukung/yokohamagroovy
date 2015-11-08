@@ -1,4 +1,8 @@
 apply plugin: 'groovy'
+apply plugin: 'maven-publish'
+
+group = 'com.example'
+version = 0.1
 
 repositories {
     jcenter()
@@ -44,5 +48,14 @@ task showSoftwareComponent << {
     println "---Dependencies---"
     for (d in components.java.usages.dependencies) {
         println d // -> "org.codehaus.groovy:groovy-all:2.4.5"に関する情報
+    }
+}
+
+publishing {
+    publications {
+        module1(MavenPublication) {
+            // <module1>は任意のモジュール識別名。Ivyの場合は IvyPublication
+            from components.java
+        }
     }
 }

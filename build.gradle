@@ -34,3 +34,15 @@ task docsZip(type: Zip) {
         include "**/*.groovy"
     }
 }
+
+task showSoftwareComponent << {
+    println "---Artifacts---"
+    for (a in components.java.usages.artifacts) {
+        println a.file  // -> <プロジェクト>/build/libs/<プロジェクト名>.jar
+    }
+
+    println "---Dependencies---"
+    for (d in components.java.usages.dependencies) {
+        println d // -> "org.codehaus.groovy:groovy-all:2.4.5"に関する情報
+    }
+}

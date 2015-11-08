@@ -1,6 +1,7 @@
 task docsZip(type: Zip) {
     //baseName = "project"
     destinationDir = file("build")
+    archiveName = "project-docs.zip"    // archiveName が指定されているとそれが優先される
     appendix = "docs"
     classifier = "jdk15"
     from("src/test/groovy") {

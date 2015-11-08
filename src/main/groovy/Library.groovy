@@ -5,6 +5,11 @@
  * @author yukung, @date 15/11/08 14:10
  */
 class Library {
+    /**
+     * example method.
+     * 
+     * @return true/false
+     */
     boolean someLibraryMethod() {
         true
     }

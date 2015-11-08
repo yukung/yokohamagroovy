@@ -29,4 +29,8 @@ task docsZip(type: Zip) {
             filter org.apache.tools.ant.filters.TabsToSpaces, tablength: 2
         }
     }
+    baseName = "project-src"
+    from("src/groovy") {
+        include "**/*.groovy"
+    }
 }

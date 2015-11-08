@@ -1,0 +1,6 @@
+task docsZip(type: Zip) {
+    baseName = "project"
+    from("src/main/groovy") {
+        include "**/*.groovy"
+    }
+}

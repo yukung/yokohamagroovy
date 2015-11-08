@@ -12,6 +12,7 @@ dependencies {
 
 task docsZip(type: Zip) {
     from "build/docs"
+    into "userguide"
     include "**/*.css", "**/*.html"
     exclude "single.html"
     includeEmptyDirs = false

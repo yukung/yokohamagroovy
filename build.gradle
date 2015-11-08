@@ -21,6 +21,12 @@ task docsZip(type: Zip) {
             exclude "single.html"
             includeEmptyDirs = false
         }
-
+        from("src/test") {
+            include "**/*.groovy"
+            filter { line ->
+                line.replaceAll(/yukung/, 'Yusuke Ikeda')
+            }
+            filter org.apache.tools.ant.filters.TabsToSpaces, tablength: 2
+        }
     }
 }

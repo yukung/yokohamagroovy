@@ -1,0 +1,61 @@
+apply plugin: 'groovy'
+apply plugin: 'maven-publish'
+
+group = 'com.example'
+version = 0.1
+
+repositories {
+    jcenter()
+}
+
+dependencies {
+    compile 'org.codehaus.groovy:groovy-all:2.4.5'
+    testCompile 'org.spockframework:spock-core:1.0-groovy-2.4'
+    testCompile 'junit:junit:4.12'
+}
+
+task docsZip(type: Zip) {
+    into("userguide") {
+        from("build/docs") {
+            include "**/*.css", "**/*.html"
+            rename { originalName ->
+                if (originalName == "index.html")
+                    return "index-${new Date().format("yyyyMMddHHmm")}.html"
+            }
+            exclude "single.html"
+            includeEmptyDirs = false
+        }
+        from("src/test") {
+            include "**/*.groovy"
+            filter { line ->
+                line.replaceAll(/yukung/, 'Yusuke Ikeda')
+            }
+            filter org.apache.tools.ant.filters.TabsToSpaces, tablength: 2
+        }
+    }
+    baseName = "project-src"
+    from("src/groovy") {
+        include "**/*.groovy"
+    }
+}
+
+task showSoftwareComponent << {
+    println "---Artifacts---"
+    for (a in components.java.usages.artifacts) {
+        println a.file  // -> <プロジェクト>/build/libs/<プロジェクト名>.jar
+    }
+
+    println "---Dependencies---"
+    for (d in components.java.usages.dependencies) {
+        println d // -> "org.codehaus.groovy:groovy-all:2.4.5"に関する情報
+    }
+}
+
+publishing {
+    publications {
+        module1(MavenPublication) {
+            // <module1>は任意のモジュール識別名。Ivyの場合は IvyPublication
+            from components.java
+        }
+    }
+}

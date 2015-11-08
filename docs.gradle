@@ -1,6 +1,9 @@
 task docsZip(type: Zip) {
-    baseName = "project"
-    from("src/main/groovy") {
+    //baseName = "project"
+    destinationDir = file("build")
+    appendix = "docs"
+    classifier = "jdk15"
+    from("src/test/groovy") {
         include "**/*.groovy"
     }
 }

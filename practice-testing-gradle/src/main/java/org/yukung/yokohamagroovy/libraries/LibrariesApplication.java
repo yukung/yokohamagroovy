@@ -4,9 +4,9 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class PracticeTestingGradleApplication {
+public class LibrariesApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(PracticeTestingGradleApplication.class, args);
+        SpringApplication.run(LibrariesApplication.class, args);
     }
 }

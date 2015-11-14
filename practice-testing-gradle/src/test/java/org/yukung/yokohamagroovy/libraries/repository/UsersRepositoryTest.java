@@ -71,4 +71,14 @@ public class UsersRepositoryTest {
         IDataSet expectedFixture = YamlDataSet.load(getClass().getResourceAsStream("/fixtures/users/users-updated.yml"));
         tester.verifyTable("USERS", expectedFixture);
     }
+
+    @Test
+    public void testDelete() throws Exception {
+        User user = repository.findOne(2L);
+        Long userId = user.getUserId();
+        repository.delete(userId);
+        assertThat(repository.findOne(userId), is(nullValue()));
+        IDataSet expected = YamlDataSet.load(getClass().getResourceAsStream("/fixtures/users/users-deleted.yml"));
+        tester.verifyTable("USERS", expected);
+    }
 }

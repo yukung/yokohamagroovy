@@ -1,9 +1,9 @@
 package org.yukung.yokohamagroovy.libraries.repository;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
@@ -23,7 +23,7 @@ public class UsersRepository {
     public User save(User user) {
         if (user.getUserId() == null) {
             KeyHolder keyHolder = new GeneratedKeyHolder();
-            jdbcTemplate.update((PreparedStatementCreator) con -> {
+            jdbcTemplate.update(con -> {
                 PreparedStatement ps = con.prepareStatement(
                         "INSERT INTO users (user_name, user_address, phone_number, email_address, other_user_details) VALUES (?, ?, ?, ?, ?)");
                 ps.setString(1, user.getUserName());
@@ -49,9 +49,18 @@ public class UsersRepository {
     }
 
     public User findOne(Long userId) {
-        User user = jdbcTemplate.queryForObject(
-                "SELECT user_id, user_name, user_address, phone_number, email_address, other_user_details FROM users WHERE user_id = ?",
-                new BeanPropertyRowMapper<>(User.class), userId);
-        return user;
+        try {
+            return jdbcTemplate.queryForObject(
+                    "SELECT user_id, user_name, user_address, phone_number, email_address, other_user_details FROM users WHERE user_id = ?",
+                    new BeanPropertyRowMapper<>(User.class), userId);
+        } catch (EmptyResultDataAccessException e) {
+            return null;
+        }
+    }
+
+    public void delete(Long userId) {
+        jdbcTemplate.update(
+                "DELETE FROM users WHERE user_id = ?",
+                userId);
     }
 }

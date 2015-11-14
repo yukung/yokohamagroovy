@@ -40,10 +40,10 @@ public class UsersRepositoryTest {
                 .emailAddress("yamada_taro@example.com")
                 .otherUserDetails("登録対象")
                 .build();
-        IDataSet expected = YamlDataSet.load(getClass().getResourceAsStream("/fixtures/users/users-updated.yml"));
         User actual = repository.save(user);
         assertThat(actual, is(notNullValue()));
         assertThat(actual.getUserId(), is(notNullValue()));
+        IDataSet expected = YamlDataSet.load(getClass().getResourceAsStream("/fixtures/users/users-inserted.yml"));
         tester.verifyTable("USERS", expected, "USER_ID");
     }
 
@@ -57,5 +57,18 @@ public class UsersRepositoryTest {
         assertThat(actual.getPhoneNumber(), is("090-2222-2222"));
         assertThat(actual.getEmailAddress(), is("suzuki_ichiro@example.com"));
         assertThat(actual.getOtherUserDetails(), is("テストユーザー２"));
+    }
+
+    @Test
+    public void testUpdate() throws Exception {
+        User before = repository.findOne(2L);
+        String expectedOtherUserDetails = "更新しました。";
+        before.setOtherUserDetails(expectedOtherUserDetails);
+        User actual = repository.save(before);
+        assertThat(actual, is(notNullValue()));
+        assertThat(actual.getUserId(), is(notNullValue()));
+        assertThat(actual.getOtherUserDetails(), is(equalTo(expectedOtherUserDetails)));
+        IDataSet expectedFixture = YamlDataSet.load(getClass().getResourceAsStream("/fixtures/users/users-updated.yml"));
+        tester.verifyTable("USERS", expectedFixture);
     }
 }

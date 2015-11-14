@@ -5,10 +5,4 @@ USERS:
   USER_ADDRESS: 神奈川県横浜市
   PHONE_NUMBER: 090-2222-2222
   EMAIL_ADDRESS: suzuki_ichiro@example.com
-  OTHER_USER_DETAILS: テストユーザー２
--
-  USER_NAME: 山田太郎
-  USER_ADDRESS: 東京都渋谷区
-  PHONE_NUMBER: 090-1111-1111
-  EMAIL_ADDRESS: yamada_taro@example.com
-  OTHER_USER_DETAILS: 登録対象
+  OTHER_USER_DETAILS: 更新しました。

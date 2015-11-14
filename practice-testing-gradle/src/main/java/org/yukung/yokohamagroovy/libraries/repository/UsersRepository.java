@@ -21,19 +21,31 @@ public class UsersRepository {
     private JdbcTemplate jdbcTemplate;
 
     public User save(User user) {
-        KeyHolder keyHolder = new GeneratedKeyHolder();
-        jdbcTemplate.update((PreparedStatementCreator) con -> {
-            PreparedStatement ps = con.prepareStatement(
-                    "INSERT INTO users (user_name, user_address, phone_number, email_address, other_user_details) VALUES (?, ?, ?, ?, ?)");
-            ps.setString(1, user.getUserName());
-            ps.setString(2, user.getUserAddress());
-            ps.setString(3, user.getPhoneNumber());
-            ps.setString(4, user.getEmailAddress());
-            ps.setString(5, user.getOtherUserDetails());
-            return ps;
-        }, keyHolder);
-        user.setUserId(keyHolder.getKey().longValue());
-        return user;
+        if (user.getUserId() == null) {
+            KeyHolder keyHolder = new GeneratedKeyHolder();
+            jdbcTemplate.update((PreparedStatementCreator) con -> {
+                PreparedStatement ps = con.prepareStatement(
+                        "INSERT INTO users (user_name, user_address, phone_number, email_address, other_user_details) VALUES (?, ?, ?, ?, ?)");
+                ps.setString(1, user.getUserName());
+                ps.setString(2, user.getUserAddress());
+                ps.setString(3, user.getPhoneNumber());
+                ps.setString(4, user.getEmailAddress());
+                ps.setString(5, user.getOtherUserDetails());
+                return ps;
+            }, keyHolder);
+            user.setUserId(keyHolder.getKey().longValue());
+            return user;
+        } else {
+            jdbcTemplate.update(
+                    "UPDATE users SET user_name = ?, user_address = ?, phone_number = ?, email_address = ?, other_user_details = ? WHERE user_id = ?",
+                    user.getUserName(),
+                    user.getUserAddress(),
+                    user.getPhoneNumber(),
+                    user.getEmailAddress(),
+                    user.getOtherUserDetails(),
+                    user.getUserId());
+            return user;
+        }
     }
 
     public User findOne(Long userId) {

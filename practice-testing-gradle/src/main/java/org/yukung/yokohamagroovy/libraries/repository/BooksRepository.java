@@ -1,6 +1,7 @@
 package org.yukung.yokohamagroovy.libraries.repository;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -41,21 +42,33 @@ public class BooksRepository {
     }
 
     public Book save(Book book) {
-//        SqlParameterSource param = new BeanPropertySqlParameterSource(book);
         Map<String, Object> paramMap = new HashMap<>();
         paramMap.put("isbn", book.getIsbn());
         paramMap.put("bookTitle", book.getBookTitle());
         paramMap.put("dateOfPublication", Date.valueOf(book.getDateOfPublication()));
         SqlParameterSource param = new MapSqlParameterSource(paramMap);
-        insert.execute(param);
+        if (findOne(book.getIsbn()) == null) {
+            insert.execute(param);
+        } else {
+            jdbcTemplate.update(
+                    "UPDATE books " +
+                            "SET book_title = :bookTitle," +
+                            " date_of_publication = :dateOfPublication " +
+                            "WHERE isbn = :isbn",
+                    param);
+        }
         return book;
     }
 
     public Book findOne(String isbn) {
         SqlParameterSource param = new MapSqlParameterSource("isbn", isbn);
-        return jdbcTemplate.queryForObject(
-                "SELECT isbn, book_title, date_of_publication " +
-                        "FROM books WHERE isbn = :isbn",
-                param, mapper);
+        try {
+            return jdbcTemplate.queryForObject(
+                    "SELECT isbn, book_title, date_of_publication " +
+                            "FROM books WHERE isbn = :isbn",
+                    param, mapper);
+        } catch (EmptyResultDataAccessException e) {
+            return null;
+        }
     }
 }

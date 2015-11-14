@@ -37,7 +37,6 @@ public class UsersRepository {
         if (user.getUserId() == null) {
             Number key = insert.executeAndReturnKey(param);
             user.setUserId(key.longValue());
-            return user;
         } else {
             jdbcTemplate.update(
                     "UPDATE users " +
@@ -48,8 +47,8 @@ public class UsersRepository {
                             " other_user_details = :otherUserDetails " +
                             "WHERE user_id = :userId",
                     param);
-            return user;
         }
+        return user;
     }
 
     public User findOne(Long userId) {

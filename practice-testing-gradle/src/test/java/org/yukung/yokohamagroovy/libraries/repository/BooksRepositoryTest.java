@@ -29,6 +29,7 @@ import static org.yukung.yokohamagroovy.libraries.verifier.BookVerifier.*;
 public class BooksRepositoryTest {
 
     private static final LocalDate PUBLISH_DATE = LocalDate.of(2015, 9, 10);
+    public static final String ISBN = "978-4-7981-3643-1";
 
     @Autowired
     private BooksRepository repository;
@@ -55,7 +56,7 @@ public class BooksRepositoryTest {
     @Test
     public void testRead() throws Exception {
         // Exercise
-        Book book = repository.findOne("978-4-7981-3643-1");
+        Book book = repository.findOne(ISBN);
 
         // Verify
         assertThat(book, is(notNullValue()));
@@ -65,4 +66,25 @@ public class BooksRepositoryTest {
         verify(book, Books.book01());
     }
 
+    @Test
+    public void testUpdate() throws Exception {
+        // SetUp
+        Book before = repository.findOne(ISBN);
+        String expectedTitle = "title2";
+        LocalDate expectedPublicationDate = PUBLISH_DATE;
+        before.setBookTitle(expectedTitle);
+        before.setDateOfPublication(expectedPublicationDate);
+
+        // Exercise
+        repository.save(before);
+        Book book = repository.findOne(ISBN);
+
+        // Verify
+        assertThat(book, is(notNullValue()));
+        assertThat(book.getIsbn(), is(ISBN));
+        assertThat(book.getBookTitle(), is(expectedTitle));
+        assertThat(book.getDateOfPublication(), is(expectedPublicationDate));
+        IDataSet expected = YamlDataSet.load(getClass().getResourceAsStream("/fixtures/books/books-updated.yml"));
+        tester.verifyTable("BOOKS", expected, "DATE_OF_PUBLICATION");
+    }
 }

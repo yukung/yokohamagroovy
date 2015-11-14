@@ -1,12 +1,15 @@
 package org.yukung.yokohamagroovy.libraries.repository;
 
+import jp.classmethod.testing.database.DbUnitTester;
+import jp.classmethod.testing.database.Fixture;
+import jp.classmethod.testing.database.YamlDataSet;
+import org.dbunit.dataset.IDataSet;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.SpringApplicationConfiguration;
-import org.springframework.test.annotation.Rollback;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-import org.springframework.transaction.annotation.Transactional;
 import org.yukung.yokohamagroovy.libraries.LibrariesApplication;
 import org.yukung.yokohamagroovy.libraries.entity.User;
 
@@ -18,34 +21,18 @@ import static org.junit.Assert.*;
  */
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringApplicationConfiguration(LibrariesApplication.class)
-@Transactional
-@Rollback
+@Fixture(resources = "/fixtures/users/users.yml")
 public class UsersRepositoryTest {
 
     @Autowired
     private UsersRepository repository;
 
-    @Test
-    public void testInsert() throws Exception {
-        User user = User.builder()
-            .userName("山田太郎")
-            .userAddress("東京都渋谷区")
-            .phoneNumber("090-1111-1111")
-            .emailAddress("yamada_taro@example.com")
-            .otherUserDetails("登録対象")
-            .build();
-        User actual = repository.save(user);
-        assertThat(actual, is(notNullValue()));
-        assertThat(actual.getUserId(), is(notNullValue()));
-        assertThat(actual.getUserName(), is("山田太郎"));
-        assertThat(actual.getUserAddress(), is("東京都渋谷区"));
-        assertThat(actual.getPhoneNumber(), is("090-1111-1111"));
-        assertThat(actual.getEmailAddress(), is("yamada_taro@example.com"));
-        assertThat(actual.getOtherUserDetails(), is("登録対象"));
-    }
+    @Autowired
+    @Rule
+    public DbUnitTester tester;
 
     @Test
-    public void testRead() throws Exception {
+    public void testInsert() throws Exception {
         User user = User.builder()
                 .userName("山田太郎")
                 .userAddress("東京都渋谷区")
@@ -53,14 +40,22 @@ public class UsersRepositoryTest {
                 .emailAddress("yamada_taro@example.com")
                 .otherUserDetails("登録対象")
                 .build();
-        User saved = repository.save(user);
-        User actual = repository.findOne(saved.getUserId());
+        IDataSet expected = YamlDataSet.load(getClass().getResourceAsStream("/fixtures/users/users-updated.yml"));
+        User actual = repository.save(user);
         assertThat(actual, is(notNullValue()));
-        assertThat(actual.getUserId(), is(saved.getUserId()));
-        assertThat(actual.getUserName(), is("山田太郎"));
-        assertThat(actual.getUserAddress(), is("東京都渋谷区"));
-        assertThat(actual.getPhoneNumber(), is("090-1111-1111"));
-        assertThat(actual.getEmailAddress(), is("yamada_taro@example.com"));
-        assertThat(actual.getOtherUserDetails(), is("登録対象"));
+        assertThat(actual.getUserId(), is(notNullValue()));
+        tester.verifyTable("USERS", expected, "USER_ID");
+    }
+
+    @Test
+    public void testRead() throws Exception {
+        User actual = repository.findOne(2L);
+        assertThat(actual, is(notNullValue()));
+        assertThat(actual.getUserId(), is(2L));
+        assertThat(actual.getUserName(), is("鈴木一郎"));
+        assertThat(actual.getUserAddress(), is("神奈川県横浜市"));
+        assertThat(actual.getPhoneNumber(), is("090-2222-2222"));
+        assertThat(actual.getEmailAddress(), is("suzuki_ichiro@example.com"));
+        assertThat(actual.getOtherUserDetails(), is("テストユーザー２"));
     }
 }

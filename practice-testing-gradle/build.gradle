@@ -41,6 +41,8 @@ repositories {
     mavenCentral()
     maven { url "https://repo.spring.io/snapshot" }
     maven { url "https://repo.spring.io/milestone" }
+    maven { url "http://public-maven.classmethod.info/release" }
+    maven { url "http://public-maven.classmethod.info/snapshot" }
 }
 
 dependencies {
@@ -50,8 +52,11 @@ dependencies {
     compile "org.springframework.boot:spring-boot-starter-thymeleaf"
     compile "org.flywaydb:flyway-core"
     provided "org.projectlombok:lombok"
+    compile "org.bgee.log4jdbc-log4j2:log4jdbc-log4j2-jdbc4.1:1.16"
     runtime "com.h2database:h2"
     testCompile "org.springframework.boot:spring-boot-starter-test"
+    testCompile "org.dbunit:dbunit:2.4.9"
+    testCompile "jp.classmethod.testing:cmtest-db:0.4"
 }
 
 dependencyManagement {

@@ -12,13 +12,13 @@ import org.springframework.boot.test.SpringApplicationConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.yukung.yokohamagroovy.libraries.LibrariesApplication;
 import org.yukung.yokohamagroovy.libraries.entity.Book;
+import org.yukung.yokohamagroovy.libraries.verifier.Fixtures.Books;
 
 import java.time.LocalDate;
-import java.time.ZoneId;
-import java.util.Date;
 
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
+import static org.yukung.yokohamagroovy.libraries.verifier.BookVerifier.*;
 
 /**
  * @author yukung
@@ -28,7 +28,7 @@ import static org.junit.Assert.*;
 @Fixture(resources = "/fixtures/books/books.yml")
 public class BooksRepositoryTest {
 
-    private static final Date PUBLISH_DATE = Date.from(LocalDate.of(2015, 9, 10).atStartOfDay(ZoneId.systemDefault()).toInstant());
+    private static final LocalDate PUBLISH_DATE = LocalDate.of(2015, 9, 10);
 
     @Autowired
     private BooksRepository repository;
@@ -40,11 +40,7 @@ public class BooksRepositoryTest {
     @Test
     public void testInsert() throws Exception {
         // SetUp
-        Book book = Book.builder()
-                .isbn("isbn1")
-                .bookTitle("title1")
-                .dateOfPublication(PUBLISH_DATE)
-                .build();
+        Book book = new Book("isbn1", "title1", PUBLISH_DATE);
 
         // Exercise
         Book actual = repository.save(book);
@@ -55,4 +51,18 @@ public class BooksRepositoryTest {
         IDataSet expected = YamlDataSet.load(getClass().getResourceAsStream("/fixtures/books/books-inserted.yml"));
         tester.verifyTable("BOOKS", expected, "DATE_OF_PUBLICATION");
     }
+
+    @Test
+    public void testRead() throws Exception {
+        // Exercise
+        Book book = repository.findOne("978-4-7981-3643-1");
+
+        // Verify
+        assertThat(book, is(notNullValue()));
+        assertThat(book.getIsbn(), is(Books.book01().getIsbn()));
+        assertThat(book.getBookTitle(), is(Books.book01().getBookTitle()));
+        assertThat(book.getDateOfPublication(), is(Books.book01().getDateOfPublication()));
+        verify(book, Books.book01());
+    }
+
 }

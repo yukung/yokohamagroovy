@@ -87,4 +87,18 @@ public class BooksRepositoryTest {
         IDataSet expected = YamlDataSet.load(getClass().getResourceAsStream("/fixtures/books/books-updated.yml"));
         tester.verifyTable("BOOKS", expected, "DATE_OF_PUBLICATION");
     }
+
+    @Test
+    public void testDelete() throws Exception {
+        // SetUp
+        Book before = repository.findOne(ISBN);
+
+        // Exercise
+        repository.delete(ISBN);
+
+        // Verify
+        assertThat(repository.findOne(ISBN), is(nullValue()));
+        IDataSet expected = YamlDataSet.load(getClass().getResourceAsStream("/fixtures/books/books-deleted.yml"));
+        tester.verifyTable("BOOKS", expected);
+    }
 }

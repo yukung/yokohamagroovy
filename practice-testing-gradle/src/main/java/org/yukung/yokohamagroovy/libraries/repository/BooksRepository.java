@@ -71,4 +71,10 @@ public class BooksRepository {
             return null;
         }
     }
+
+    public void delete(String isbn) {
+        SqlParameterSource param = new MapSqlParameterSource("isbn", isbn);
+        jdbcTemplate.update(
+                "DELETE FROM books WHERE isbn = :isbn", param);
+    }
 }

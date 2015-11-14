@@ -33,6 +33,7 @@ public class UsersRepositoryTest {
 
     @Test
     public void testInsert() throws Exception {
+        // SetUp
         User user = User.builder()
                 .userName("山田太郎")
                 .userAddress("東京都渋谷区")
@@ -40,7 +41,11 @@ public class UsersRepositoryTest {
                 .emailAddress("yamada_taro@example.com")
                 .otherUserDetails("登録対象")
                 .build();
+
+        // Exercise
         User actual = repository.save(user);
+
+        // Verify
         assertThat(actual, is(notNullValue()));
         assertThat(actual.getUserId(), is(notNullValue()));
         IDataSet expected = YamlDataSet.load(getClass().getResourceAsStream("/fixtures/users/users-inserted.yml"));
@@ -49,7 +54,10 @@ public class UsersRepositoryTest {
 
     @Test
     public void testRead() throws Exception {
+        // Exercise
         User actual = repository.findOne(2L);
+
+        // Verify
         assertThat(actual, is(notNullValue()));
         assertThat(actual.getUserId(), is(2L));
         assertThat(actual.getUserName(), is("鈴木一郎"));
@@ -61,10 +69,15 @@ public class UsersRepositoryTest {
 
     @Test
     public void testUpdate() throws Exception {
+        // SetUp
         User before = repository.findOne(2L);
         String expectedOtherUserDetails = "更新しました。";
         before.setOtherUserDetails(expectedOtherUserDetails);
+
+        // Exercise
         User actual = repository.save(before);
+
+        // Verify
         assertThat(actual, is(notNullValue()));
         assertThat(actual.getUserId(), is(notNullValue()));
         assertThat(actual.getOtherUserDetails(), is(equalTo(expectedOtherUserDetails)));
@@ -74,9 +87,14 @@ public class UsersRepositoryTest {
 
     @Test
     public void testDelete() throws Exception {
+        // SetUp
         User user = repository.findOne(2L);
         Long userId = user.getUserId();
+
+        // Exercise
         repository.delete(userId);
+
+        // Verify
         assertThat(repository.findOne(userId), is(nullValue()));
         IDataSet expected = YamlDataSet.load(getClass().getResourceAsStream("/fixtures/users/users-deleted.yml"));
         tester.verifyTable("USERS", expected);

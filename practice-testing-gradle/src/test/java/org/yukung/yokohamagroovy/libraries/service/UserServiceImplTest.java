@@ -20,12 +20,12 @@ import static org.mockito.Mockito.*;
 @RunWith(MockitoJUnitRunner.class)
 public class UserServiceImplTest {
 
+    public static final Long USER_ID = 1234L;
     public static final String USER_NAME = "John Doe";
     public static final String USER_ADDRESS = "東京都渋谷区";
     public static final String PHONE_NUMBER = "090-1111-1111";
     public static final String EMAIL_ADDRESS = "john_doe@example.com";
     public static final String OTHER_USER_DETAILS = "test user1";
-    public static final long USER_ID = 1234L;
 
     @InjectMocks
     private UserService service = new UserServiceImpl();

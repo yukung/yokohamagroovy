@@ -17,6 +17,7 @@ plugins {
     id "java"
     id "checkstyle"
     id "findbugs"
+    id "jacoco"
     id "eclipse"
     id "idea"
     id "org.flywaydb.flyway" version "3.2.1"

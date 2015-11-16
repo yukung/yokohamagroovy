@@ -72,7 +72,7 @@ checkstyle {
 }
 
 findbugs {
-    reportLevel = 'high'
+    reportLevel = 'medium'
 }
 
 flyway {

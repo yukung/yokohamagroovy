@@ -1,5 +1,6 @@
 gitbucket:
   image: f99aq8ove/gitbucket:latest
+  container_name: gitbucket
   volumes:
     - gitbucket-data:/gitbucket
   ports:
@@ -8,6 +9,7 @@ gitbucket:
   command: java -jar /opt/gitbucket.war --prefix=/gitbucket
 jenkins:
   image: jenkins:latest
+  container_name: jenkins
   volumes:
     - jenkins-data:/var/jenkins_home
   ports:

@@ -117,7 +117,6 @@ public class UserServiceImplTest {
         doNothing().when(repository).delete(user.getUserId());
         when(repository.findOne(user.getUserId())).thenReturn(null);
 
-
         // Exercise
         service.delete(user);
 

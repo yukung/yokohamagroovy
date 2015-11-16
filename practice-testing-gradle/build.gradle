@@ -16,6 +16,7 @@ buildscript {
 plugins {
     id "java"
     id "checkstyle"
+    id "findbugs"
     id "eclipse"
     id "idea"
     id "org.flywaydb.flyway" version "3.2.1"
@@ -70,6 +71,10 @@ checkstyle {
     toolVersion = '6.12.1'
 }
 
+findbugs {
+    reportLevel = 'high'
+}
+
 flyway {
     url = "jdbc:h2:file:./build/libraries"
     user = "sa"
@@ -104,8 +109,9 @@ eclipse {
     }
 }
 
-// テストコードの checkstyle の検査はパスする
+// テストコードの checkstyle, findbugs の検査はパスする
 task checkstyleTest(overwrite: true) << {}
+task findbugsTest(overwrite: true) << {}
 
 task wrapper(type: Wrapper) {
     gradleVersion = '2.8'

@@ -20,8 +20,10 @@ import static org.mockito.Mockito.*;
 @RunWith(MockitoJUnitRunner.class)
 public class AuthorServiceImplTest {
 
+    public static final Long AUTHOR_ID = 2345L;
     public static final String AUTHOR_FIRSTNAME = "test";
     public static final String AUTHOR_SURNAME = "author1";
+
     @InjectMocks
     private AuthorService service = new AuthorServiceImpl();
 
@@ -50,7 +52,18 @@ public class AuthorServiceImplTest {
 
     @Test
     public void testFind() throws Exception {
-        fail();
+        // SetUp
+        when(repository.findOne(AUTHOR_ID)).thenReturn(Fixtures.Authors.author01());
+
+        // Exercise
+        Author actual = service.find(AUTHOR_ID);
+
+        // Verify
+        assertThat(actual, is(notNullValue()));
+        assertThat(actual.getAuthorId(), is(AUTHOR_ID));
+        assertThat(actual.getAuthorFirstname(), is(AUTHOR_FIRSTNAME));
+        assertThat(actual.getAuthorSurname(), is(AUTHOR_SURNAME));
+        verify(repository, times(1)).findOne(AUTHOR_ID);
     }
 
     @Test

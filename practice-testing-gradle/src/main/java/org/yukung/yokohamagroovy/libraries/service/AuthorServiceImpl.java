@@ -21,7 +21,7 @@ public class AuthorServiceImpl implements AuthorService {
 
     @Override
     public Author find(Long authorId) {
-        return null;
+        return repository.findOne(authorId);
     }
 
     @Override

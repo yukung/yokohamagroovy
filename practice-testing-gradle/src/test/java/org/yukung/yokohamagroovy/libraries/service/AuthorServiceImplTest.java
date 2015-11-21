@@ -68,7 +68,25 @@ public class AuthorServiceImplTest {
 
     @Test
     public void testUpdate() throws Exception {
-        fail();
+        // SetUp
+        Author author = Fixtures.Authors.author01();
+        String UPDATED_AUTHOR_FIRSTNAME = "名無しの";
+        String UPDATED_AUTHOR_SURNAME = "権兵衛";
+        author.setAuthorFirstname(UPDATED_AUTHOR_FIRSTNAME);
+        author.setAuthorSurname(UPDATED_AUTHOR_SURNAME);
+        when(repository.save(author)).thenReturn(Fixtures.Authors.author01_updated());
+        when(repository.findOne(author.getAuthorId())).thenReturn(Fixtures.Authors.author01_updated());
+
+        // Exercise
+        service.update(author);
+
+        // Verify
+        Author actual = service.find(author.getAuthorId());
+        assertThat(actual, is(notNullValue()));
+        assertThat(actual.getAuthorId(), is(author.getAuthorId()));
+        assertThat(actual.getAuthorFirstname(), is(author.getAuthorFirstname()));
+        assertThat(actual.getAuthorSurname(), is(author.getAuthorSurname()));
+        verify(repository, times(1)).save(author);
     }
 
     @Test

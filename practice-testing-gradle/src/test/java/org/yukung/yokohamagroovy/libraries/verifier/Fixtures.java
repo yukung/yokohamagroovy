@@ -62,5 +62,13 @@ public class Fixtures {
                     .field("authorSurname", "author1")
                     .returnObject();
         }
+
+        public static Author author01_updated() {
+            return FixtureUtils.injectTo(new Author())
+                    .field("authorId", 2345L)
+                    .field("authorFirstname", "名無しの")
+                    .field("authorSurname", "権兵衛")
+                    .returnObject();
+        }
     }
 }

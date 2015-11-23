@@ -91,6 +91,17 @@ public class AuthorServiceImplTest {
 
     @Test
     public void testDelete() throws Exception {
-        fail();
+        // SetUp
+        Author author = Fixtures.Authors.author01();
+        doNothing().when(repository).delete(author.getAuthorId());
+        when(repository.findOne(author.getAuthorId())).thenReturn(null);
+
+        // Exercise
+        service.delete(author);
+
+        // Verify
+        Author actual = service.find(author.getAuthorId());
+        assertThat(actual, is(nullValue()));
+        verify(repository, times(1)).delete(author.getAuthorId());
     }
 }

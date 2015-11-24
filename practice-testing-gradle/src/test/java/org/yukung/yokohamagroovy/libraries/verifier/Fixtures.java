@@ -3,6 +3,7 @@ package org.yukung.yokohamagroovy.libraries.verifier;
 import jp.classmethod.testing.fixtures.FixtureUtils;
 import org.yukung.yokohamagroovy.libraries.entity.Author;
 import org.yukung.yokohamagroovy.libraries.entity.Book;
+import org.yukung.yokohamagroovy.libraries.entity.Category;
 import org.yukung.yokohamagroovy.libraries.entity.User;
 
 import java.sql.Date;
@@ -68,6 +69,15 @@ public class Fixtures {
                     .field("authorId", 2345L)
                     .field("authorFirstname", "名無しの")
                     .field("authorSurname", "権兵衛")
+                    .returnObject();
+        }
+    }
+
+    public static class Categories {
+        public static Category category01() {
+            return FixtureUtils.injectTo(new Category())
+                    .field("categoryId", 3456L)
+                    .field("categoryName", "computer")
                     .returnObject();
         }
     }

@@ -1,14 +1,22 @@
 package org.yukung.yokohamagroovy.libraries.service;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 import org.yukung.yokohamagroovy.libraries.entity.Category;
+import org.yukung.yokohamagroovy.libraries.repository.CategoriesRepository;
 
 /**
  * @author yukung
  */
+@Service
 public class CategoryServiceImpl implements CategoryService {
+
+    @Autowired
+    private CategoriesRepository repository;
+
     @Override
     public Category create(Category category) {
-        return null;
+        return repository.save(category);
     }
 
     @Override

@@ -21,6 +21,7 @@ import static org.mockito.Mockito.*;
 public class CategoryServiceImplTest {
 
     public static final String CATEGORY_NAME = "computer";
+    public static final long CATEGORY_ID = 3456L;
 
     @InjectMocks
     private CategoryService service = new CategoryServiceImpl();
@@ -48,7 +49,17 @@ public class CategoryServiceImplTest {
 
     @Test
     public void testFind() throws Exception {
-        fail();
+        // SetUp
+        when(repository.findOne(CATEGORY_ID)).thenReturn(Fixtures.Categories.category01());
+
+        // Exercise
+        Category actual = service.find(CATEGORY_ID);
+
+        // Verify
+        assertThat(actual, is(notNullValue()));
+        assertThat(actual.getCategoryId(), is(CATEGORY_ID));
+        assertThat(actual.getCategoryName(), is(CATEGORY_NAME));
+        verify(repository, times(1)).findOne(CATEGORY_ID);
     }
 
     @Test

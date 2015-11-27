@@ -21,7 +21,7 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     public Category find(Long categoryId) {
-        return null;
+        return repository.findOne(categoryId);
     }
 
     @Override

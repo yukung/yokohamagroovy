@@ -80,5 +80,12 @@ public class Fixtures {
                     .field("categoryName", "computer")
                     .returnObject();
         }
+
+        public static Category category01_updated() {
+            return FixtureUtils.injectTo(new Category())
+                    .field("categoryId", 3456L)
+                    .field("categoryName", "更新後カテゴリ")
+                    .returnObject();
+        }
     }
 }

@@ -64,7 +64,22 @@ public class CategoryServiceImplTest {
 
     @Test
     public void testUpdate() throws Exception {
-        fail();
+        // SetUp
+        Category category = Fixtures.Categories.category01();
+        String UPDATED_CATEGORY_NAME = "更新後カテゴリ";
+        category.setCategoryName(UPDATED_CATEGORY_NAME);
+        when(repository.save(category)).thenReturn(Fixtures.Categories.category01_updated());
+        when(repository.findOne(category.getCategoryId())).thenReturn(Fixtures.Categories.category01_updated());
+
+        // Exercise
+        service.update(category);
+
+        // Verify
+        Category actual = service.find(category.getCategoryId());
+        assertThat(actual, is(notNullValue()));
+        assertThat(actual.getCategoryId(), is(category.getCategoryId()));
+        assertThat(actual.getCategoryName(), is(UPDATED_CATEGORY_NAME));
+        verify(repository, times(1)).save(category);
     }
 
     @Test

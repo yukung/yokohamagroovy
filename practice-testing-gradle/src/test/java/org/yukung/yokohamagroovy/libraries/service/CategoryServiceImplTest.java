@@ -84,6 +84,17 @@ public class CategoryServiceImplTest {
 
     @Test
     public void testDelete() throws Exception {
-        fail();
+        // SetUp
+        Category category = Fixtures.Categories.category01();
+        doNothing().when(repository).delete(category.getCategoryId());
+        when(repository.findOne(category.getCategoryId())).thenReturn(null);
+
+        // Exercise
+        service.delete(category);
+
+        // Verify
+        Category actual = service.find(category.getCategoryId());
+        assertThat(actual, is(nullValue()));
+        verify(repository, times(1)).delete(category.getCategoryId());
     }
 }

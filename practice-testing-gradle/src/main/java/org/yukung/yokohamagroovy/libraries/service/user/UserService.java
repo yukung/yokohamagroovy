@@ -1,4 +1,4 @@
-package org.yukung.yokohamagroovy.libraries.service;
+package org.yukung.yokohamagroovy.libraries.service.user;
 
 import org.yukung.yokohamagroovy.libraries.entity.User;
 

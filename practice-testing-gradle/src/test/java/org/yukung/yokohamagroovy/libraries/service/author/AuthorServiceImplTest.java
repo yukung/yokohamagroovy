@@ -1,4 +1,4 @@
-package org.yukung.yokohamagroovy.libraries.service;
+package org.yukung.yokohamagroovy.libraries.service.author;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;

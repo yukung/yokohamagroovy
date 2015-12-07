@@ -23,12 +23,16 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @RunWith(MockitoJUnitRunner.class)
 public class AuthorRestControllerTest {
 
+    public static final long AUTHOR_ID = 10L;
+
     private MockMvc mockMvc;
 
     @InjectMocks
     private AuthorRestController authorRestController;
     @Mock
     private AuthorService authorService;
+
+    private ObjectMapper mapper = new ObjectMapper();
 
     @Before
     public void setUp() throws Exception {
@@ -37,15 +41,35 @@ public class AuthorRestControllerTest {
 
     @Test
     public void testPostAuthors() throws Exception {
+        // SetUp
         Author author = Author.builder()
                 .authorFirstname("John")
-                .authorSurname("Doe").build();
+                .authorSurname("Doe")
+                .build();
         when(authorService.create(author)).thenReturn(new Author(10L, "John", "Doe"));
-        ObjectMapper mapper = new ObjectMapper();
 
+        // Exercise&Verify
         mockMvc.perform(post("/api/authors")
                 .contentType(APPLICATION_JSON)
                 .content(mapper.writeValueAsString(author)))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(APPLICATION_JSON_UTF8))
+                .andExpect(content().json(mapper.writeValueAsString(new Author(10L, "John", "Doe"))));
+    }
+
+    @Test
+    public void testGetAuthors() throws Exception {
+        // SetUp
+        Author author = Author.builder()
+                .authorId(AUTHOR_ID)
+                .authorFirstname("John")
+                .authorSurname("Doe")
+                .build();
+        when(authorService.find(AUTHOR_ID)).thenReturn(author);
+
+        // Exercise&Verify
+        mockMvc.perform(get("/api/authors/" + AUTHOR_ID)
+                .contentType(APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(APPLICATION_JSON_UTF8))
                 .andExpect(content().json(mapper.writeValueAsString(new Author(10L, "John", "Doe"))));

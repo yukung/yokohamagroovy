@@ -74,4 +74,21 @@ public class AuthorRestControllerTest {
                 .andExpect(content().contentType(APPLICATION_JSON_UTF8))
                 .andExpect(content().json(mapper.writeValueAsString(new Author(10L, "John", "Doe"))));
     }
+
+    @Test
+    public void testPutAuthors() throws Exception {
+        // SetUp
+        Author author = Author.builder()
+                .authorId(AUTHOR_ID)
+                .authorFirstname("名無しの")
+                .authorSurname("権兵衛")
+                .build();
+        doNothing().when(authorService).update(author);
+
+        // Exercise&Verify
+        mockMvc.perform(put("/api/authors/" + AUTHOR_ID)
+                .contentType(APPLICATION_JSON)
+                .content(mapper.writeValueAsString(author)))
+                .andExpect(status().isCreated());
+    }
 }

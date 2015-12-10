@@ -56,6 +56,7 @@ public class AuthorRestControllerTest {
                 .andExpect(content().contentType(APPLICATION_JSON_UTF8))
                 .andExpect(content().json(mapper.writeValueAsString(new Author(10L, "John", "Doe"))));
         verify(authorService, times(1)).create(author);
+        verifyNoMoreInteractions(authorService);
     }
 
     @Test
@@ -75,6 +76,7 @@ public class AuthorRestControllerTest {
                 .andExpect(content().contentType(APPLICATION_JSON_UTF8))
                 .andExpect(content().json(mapper.writeValueAsString(new Author(10L, "John", "Doe"))));
         verify(authorService, times(1)).find(AUTHOR_ID);
+        verifyNoMoreInteractions(authorService);
     }
 
     @Test
@@ -93,5 +95,6 @@ public class AuthorRestControllerTest {
                 .content(mapper.writeValueAsString(author)))
                 .andExpect(status().isCreated());
         verify(authorService, times(1)).update(author);
+        verifyNoMoreInteractions(authorService);
     }
 }

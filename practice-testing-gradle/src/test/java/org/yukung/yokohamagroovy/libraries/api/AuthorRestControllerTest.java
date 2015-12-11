@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
@@ -12,6 +13,8 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.yukung.yokohamagroovy.libraries.entity.Author;
 import org.yukung.yokohamagroovy.libraries.service.author.AuthorService;
 
+import static org.hamcrest.Matchers.*;
+import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.http.MediaType.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -46,7 +49,12 @@ public class AuthorRestControllerTest {
                 .authorFirstname("John")
                 .authorSurname("Doe")
                 .build();
-        when(authorService.create(author)).thenReturn(new Author(10L, "John", "Doe"));
+        Author added = Author.builder()
+                .authorId(10L)
+                .authorFirstname("John")
+                .authorSurname("Doe")
+                .build();
+        when(authorService.create(author)).thenReturn(added);
 
         // Exercise&Verify
         mockMvc.perform(post("/api/authors")
@@ -54,9 +62,15 @@ public class AuthorRestControllerTest {
                 .content(mapper.writeValueAsString(author)))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(APPLICATION_JSON_UTF8))
-                .andExpect(content().json(mapper.writeValueAsString(new Author(10L, "John", "Doe"))));
-        verify(authorService, times(1)).create(author);
+                .andExpect(content().json(mapper.writeValueAsString(added)));
+        ArgumentCaptor<Author> captor = ArgumentCaptor.forClass(Author.class);
+        verify(authorService, times(1)).create(captor.capture());
         verifyNoMoreInteractions(authorService);
+
+       Author argument = captor.getValue();
+        assertThat(argument, is(notNullValue()));
+        assertThat(argument.getAuthorFirstname(), is("John"));
+        assertThat(argument.getAuthorSurname(), is("Doe"));
     }
 
     @Test

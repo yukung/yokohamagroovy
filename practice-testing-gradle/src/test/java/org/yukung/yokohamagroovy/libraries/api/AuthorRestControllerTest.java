@@ -89,8 +89,13 @@ public class AuthorRestControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(APPLICATION_JSON_UTF8))
                 .andExpect(content().json(mapper.writeValueAsString(new Author(10L, "John", "Doe"))));
-        verify(authorService, times(1)).find(AUTHOR_ID);
+        ArgumentCaptor<Long> captor = ArgumentCaptor.forClass(Long.class);
+        verify(authorService, times(1)).find(captor.capture());
         verifyNoMoreInteractions(authorService);
+
+        Long argument = captor.getValue();
+        assertThat(argument, is(notNullValue()));
+        assertThat(argument, is(AUTHOR_ID));
     }
 
     @Test
@@ -108,7 +113,14 @@ public class AuthorRestControllerTest {
                 .contentType(APPLICATION_JSON)
                 .content(mapper.writeValueAsString(author)))
                 .andExpect(status().isCreated());
-        verify(authorService, times(1)).update(author);
+        ArgumentCaptor<Author> captor = ArgumentCaptor.forClass(Author.class);
+        verify(authorService, times(1)).update(captor.capture());
         verifyNoMoreInteractions(authorService);
+
+        Author argument = captor.getValue();
+        assertThat(argument, is(notNullValue()));
+        assertThat(argument.getAuthorId(), is(AUTHOR_ID));
+        assertThat(argument.getAuthorFirstname(), is("名無しの"));
+        assertThat(argument.getAuthorSurname(), is("権兵衛"));
     }
 }

@@ -36,4 +36,9 @@ public class AuthorRestController {
     public void putAuthors(@PathVariable("id") Long authorId, @RequestBody Author author) {
         authorService.update(author);
     }
+
+    @RequestMapping(method = RequestMethod.DELETE, path = "authors/{id}")
+    public void deleteAuthors(@PathVariable("id") Long authorId) {
+        authorService.delete(authorId);
+    }
 }

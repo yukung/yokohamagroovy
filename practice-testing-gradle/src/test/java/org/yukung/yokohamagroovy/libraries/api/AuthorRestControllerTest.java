@@ -67,7 +67,7 @@ public class AuthorRestControllerTest {
         verify(authorService, times(1)).create(captor.capture());
         verifyNoMoreInteractions(authorService);
 
-       Author argument = captor.getValue();
+        Author argument = captor.getValue();
         assertThat(argument, is(notNullValue()));
         assertThat(argument.getAuthorFirstname(), is("John"));
         assertThat(argument.getAuthorSurname(), is("Doe"));
@@ -122,5 +122,22 @@ public class AuthorRestControllerTest {
         assertThat(argument.getAuthorId(), is(AUTHOR_ID));
         assertThat(argument.getAuthorFirstname(), is("名無しの"));
         assertThat(argument.getAuthorSurname(), is("権兵衛"));
+    }
+
+    @Test
+    public void testDeleteAuthors() throws Exception {
+        // SetUp
+        doNothing().when(authorService).delete(AUTHOR_ID);
+
+        // Exercise&Verify
+        mockMvc.perform(delete("/api/authors/" + AUTHOR_ID))
+                .andExpect(status().isOk());
+        ArgumentCaptor<Long> captor = ArgumentCaptor.forClass(Long.class);
+        verify(authorService, times(1)).delete(captor.capture());
+        verifyNoMoreInteractions(authorService);
+
+        Long argument = captor.getValue();
+        assertThat(argument, is(notNullValue()));
+        assertThat(argument, is(AUTHOR_ID));
     }
 }

@@ -97,7 +97,7 @@ public class AuthorServiceImplTest {
         when(repository.findOne(author.getAuthorId())).thenReturn(null);
 
         // Exercise
-        service.delete(author);
+        service.delete(author.getAuthorId());
 
         // Verify
         Author actual = service.find(author.getAuthorId());

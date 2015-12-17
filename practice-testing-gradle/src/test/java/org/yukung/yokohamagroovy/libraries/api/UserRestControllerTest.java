@@ -48,7 +48,7 @@ public class UserRestControllerTest {
                 .userName("John Doe")
                 .userAddress("somewhere")
                 .phoneNumber("0123456789")
-                .emailAddress("john_doe@exmaple.com")
+                .emailAddress("john_doe@example.com")
                 .otherUserDetails("hogefuga")
                 .build();
         User added = User.builder()
@@ -56,7 +56,7 @@ public class UserRestControllerTest {
                 .userName("John Doe")
                 .userAddress("somewhere")
                 .phoneNumber("0123456789")
-                .emailAddress("john_doe@exmaple.com")
+                .emailAddress("john_doe@example.com")
                 .otherUserDetails("hogefuga")
                 .build();
         when(userService.create(user)).thenReturn(added);
@@ -74,7 +74,6 @@ public class UserRestControllerTest {
 
         User argument = captor.getValue();
         assertThat(argument, is(notNullValue()));
-        assertThat(argument.getUserId(), is(USER_ID));
         assertThat(argument.getUserName(), is("John Doe"));
         assertThat(argument.getUserAddress(), is("somewhere"));
         assertThat(argument.getPhoneNumber(), is("0123456789"));

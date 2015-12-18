@@ -8,7 +8,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.yukung.yokohamagroovy.libraries.entity.User;
@@ -17,7 +16,8 @@ import org.yukung.yokohamagroovy.libraries.service.user.UserService;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.http.MediaType.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 /**
@@ -63,10 +63,10 @@ public class UserRestControllerTest {
 
         // Exercise&Verify
         mockMvc.perform(post("/api/users")
-                .contentType(MediaType.APPLICATION_JSON)
+                .contentType(APPLICATION_JSON)
                 .content(mapper.writeValueAsString(user)))
                 .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8))
+                .andExpect(content().contentType(APPLICATION_JSON_UTF8))
                 .andExpect(content().json(mapper.writeValueAsString(added)));
         ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
         verify(userService, times(1)).create(captor.capture());
@@ -79,5 +79,32 @@ public class UserRestControllerTest {
         assertThat(argument.getPhoneNumber(), is("0123456789"));
         assertThat(argument.getEmailAddress(), is("john_doe@example.com"));
         assertThat(argument.getOtherUserDetails(), is("hogefuga"));
+    }
+
+    @Test
+    public void testGetUsers() throws Exception {
+        User user = User.builder()
+                .userId(USER_ID)
+                .userName("John Doe")
+                .userAddress("somewhere")
+                .phoneNumber("0123456789")
+                .emailAddress("john_doe@example.com")
+                .otherUserDetails("hogefuga")
+                .build();
+        when(userService.find(USER_ID)).thenReturn(user);
+
+        // Exercise&Verify
+        mockMvc.perform(get("/api/users/" + USER_ID)
+                .contentType(APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(APPLICATION_JSON_UTF8))
+                .andExpect(content().json(mapper.writeValueAsString(user)));
+        ArgumentCaptor<Long> captor = ArgumentCaptor.forClass(Long.class);
+        verify(userService, times(1)).find(captor.capture());
+        verifyNoMoreInteractions(userService);
+
+        Long argument = captor.getValue();
+        assertThat(argument, is(notNullValue()));
+        assertThat(argument, is(USER_ID));
     }
 }

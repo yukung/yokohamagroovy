@@ -1,6 +1,7 @@
 package org.yukung.yokohamagroovy.libraries.api;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -21,5 +22,10 @@ public class UserRestController {
     @RequestMapping(method = RequestMethod.POST)
     public User postUsers(@RequestBody User user) {
         return userService.create(user);
+    }
+
+    @RequestMapping(method = RequestMethod.GET, path = "{id}")
+    public User getUsers(@PathVariable("id") Long userId) {
+        return userService.find(userId);
     }
 }

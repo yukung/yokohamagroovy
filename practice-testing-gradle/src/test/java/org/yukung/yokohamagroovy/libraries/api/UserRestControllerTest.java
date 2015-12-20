@@ -107,4 +107,36 @@ public class UserRestControllerTest {
         assertThat(argument, is(notNullValue()));
         assertThat(argument, is(USER_ID));
     }
+
+    @Test
+    public void testPutUsers() throws Exception {
+        // SetUp
+        User user = User.builder()
+                .userId(USER_ID)
+                .userName("名無しの権兵衛")
+                .userAddress("どこか")
+                .phoneNumber("123456789")
+                .emailAddress("nanashi@example.com")
+                .otherUserDetails("foobar")
+                .build();
+        doNothing().when(userService).update(user);
+
+        // Exercise&Verify
+        mockMvc.perform(put("/api/users/" + USER_ID)
+                .contentType(APPLICATION_JSON)
+                .content(mapper.writeValueAsString(user)))
+                .andExpect(status().isCreated());
+        ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
+        verify(userService, times(1)).update(captor.capture());
+        verifyNoMoreInteractions(userService);
+
+        User argument = captor.getValue();
+        assertThat(argument, is(notNullValue()));
+        assertThat(argument.getUserId(), is(USER_ID));
+        assertThat(argument.getUserName(), is("名無しの権兵衛"));
+        assertThat(argument.getUserAddress(), is("どこか"));
+        assertThat(argument.getPhoneNumber(), is("123456789"));
+        assertThat(argument.getEmailAddress(), is("nanashi@example.com"));
+        assertThat(argument.getOtherUserDetails(), is("foobar"));
+    }
 }

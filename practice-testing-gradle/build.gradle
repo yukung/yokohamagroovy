@@ -66,6 +66,10 @@ findbugs {
     reportLevel = 'medium'
 }
 
+jacoco {
+    toolVersion = '0.7.5.201505241946'
+}
+
 flyway {
     url = "jdbc:h2:file:./build/libraries"
     user = "sa"

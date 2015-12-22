@@ -118,7 +118,7 @@ public class UserServiceImplTest {
         when(repository.findOne(user.getUserId())).thenReturn(null);
 
         // Exercise
-        service.delete(user);
+        service.delete(user.getUserId());
 
         // Verify
         User actual = service.find(user.getUserId());

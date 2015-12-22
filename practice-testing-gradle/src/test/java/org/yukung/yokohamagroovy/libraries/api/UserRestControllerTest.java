@@ -139,4 +139,21 @@ public class UserRestControllerTest {
         assertThat(argument.getEmailAddress(), is("nanashi@example.com"));
         assertThat(argument.getOtherUserDetails(), is("foobar"));
     }
+
+    @Test
+    public void testDeleteUsers() throws Exception {
+        // SetUp
+        doNothing().when(userService).delete(USER_ID);
+
+        // Exercise&Verify
+        mockMvc.perform(delete("/api/users/" + USER_ID))
+                .andExpect(status().isOk());
+        ArgumentCaptor<Long> captor = ArgumentCaptor.forClass(Long.class);
+        verify(userService, times(1)).delete(captor.capture());
+        verifyNoMoreInteractions(userService);
+
+        Long argument = captor.getValue();
+        assertThat(argument, is(notNullValue()));
+        assertThat(argument, is(USER_ID));
+    }
 }

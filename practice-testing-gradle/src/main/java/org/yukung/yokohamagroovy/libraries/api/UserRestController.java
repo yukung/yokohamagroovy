@@ -36,4 +36,9 @@ public class UserRestController {
     public void putUsers(@PathVariable("id") Long userId, @RequestBody User user) {
         userService.update(user);
     }
+
+    @RequestMapping(method = RequestMethod.DELETE, path = "{id}")
+    public void deleteAuthors(@PathVariable("id") Long userId) {
+        userService.delete(userId);
+    }
 }

@@ -27,6 +27,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class UserRestControllerTest {
 
     public static final long USER_ID = 100L;
+
     private MockMvc mockMvc;
 
     @InjectMocks

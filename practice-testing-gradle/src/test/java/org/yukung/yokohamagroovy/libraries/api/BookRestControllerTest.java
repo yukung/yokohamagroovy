@@ -88,4 +88,28 @@ public class BookRestControllerTest {
         assertThat(argument, is(notNullValue()));
         assertThat(argument, is(ISBN));
     }
+
+    @Test
+    public void testPutBooks() throws Exception {
+        // SetUp
+        Book book = new Book(ISBN, "更新後", LocalDate.of(2015, 6, 30));
+        when(bookService.create(book)).thenReturn(book);
+        when(bookService.find(ISBN)).thenReturn(book);
+        doNothing().when(bookService).update(book);
+
+        // Exercise&Verify
+        mockMvc.perform(put("/api/books/" + ISBN)
+                .contentType(APPLICATION_JSON)
+                .content(mapper.writeValueAsString(book)))
+                .andExpect(status().isCreated());
+        ArgumentCaptor<Book> captor = ArgumentCaptor.forClass(Book.class);
+        verify(bookService, times(1)).update(captor.capture());
+        verifyNoMoreInteractions(bookService);
+
+        Book argument = captor.getValue();
+        assertThat(argument, is(notNullValue()));
+        assertThat(argument.getIsbn(), is(ISBN));
+        assertThat(argument.getBookTitle(), is("更新後"));
+        assertThat(argument.getDateOfPublication(), is(LocalDate.of(2015, 6, 30)));
+    }
 }

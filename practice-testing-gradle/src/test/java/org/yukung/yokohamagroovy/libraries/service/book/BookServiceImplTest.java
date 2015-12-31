@@ -96,7 +96,7 @@ public class BookServiceImplTest {
         when(repository.findOne(book.getIsbn())).thenReturn(null);
 
         // Exercise
-        service.delete(book);
+        service.delete(book.getIsbn());
 
         // Verify
         Book actual = service.find(book.getIsbn());

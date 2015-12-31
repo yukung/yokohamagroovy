@@ -2,14 +2,20 @@ package org.yukung.yokohamagroovy.libraries.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.junit.MockitoRule;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.SpringApplicationConfiguration;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.yukung.yokohamagroovy.libraries.LibrariesApplication;
 import org.yukung.yokohamagroovy.libraries.entity.Book;
 import org.yukung.yokohamagroovy.libraries.service.book.BookService;
 
@@ -25,18 +31,23 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /**
  * @author yukung
  */
-@RunWith(MockitoJUnitRunner.class)
+@RunWith(SpringJUnit4ClassRunner.class)
+@SpringApplicationConfiguration(LibrariesApplication.class)
 public class BookRestControllerTest {
 
     public static final String ISBN = "123456789";
+
     private MockMvc mockMvc;
 
+    @Rule
+    public MockitoRule rule = MockitoJUnit.rule();
     @InjectMocks
     private BookRestController bookRestController;
     @Mock
     private BookService bookService;
 
-    private ObjectMapper mapper = new ObjectMapper();
+    @Autowired
+    private ObjectMapper mapper;
 
     @Before
     public void setUp() throws Exception {
@@ -48,12 +59,13 @@ public class BookRestControllerTest {
         // SetUp
         Book book = new Book("123456789", "test", LocalDate.of(2000, 1, 1));
         when(bookService.create(book)).thenReturn(book);
+        System.out.println(book.toString());
 
         // Exercise&Verify
         mockMvc.perform(post("/api/books")
                 .contentType(APPLICATION_JSON)
                 .content(mapper.writeValueAsString(book)))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andExpect(content().contentType(APPLICATION_JSON_UTF8))
                 .andExpect(content().json(mapper.writeValueAsString(book)));
         ArgumentCaptor<Book> captor = ArgumentCaptor.forClass(Book.class);
@@ -101,7 +113,7 @@ public class BookRestControllerTest {
         mockMvc.perform(put("/api/books/" + ISBN)
                 .contentType(APPLICATION_JSON)
                 .content(mapper.writeValueAsString(book)))
-                .andExpect(status().isCreated());
+                .andExpect(status().isOk());
         ArgumentCaptor<Book> captor = ArgumentCaptor.forClass(Book.class);
         verify(bookService, times(1)).update(captor.capture());
         verifyNoMoreInteractions(bookService);
@@ -111,5 +123,22 @@ public class BookRestControllerTest {
         assertThat(argument.getIsbn(), is(ISBN));
         assertThat(argument.getBookTitle(), is("更新後"));
         assertThat(argument.getDateOfPublication(), is(LocalDate.of(2015, 6, 30)));
+    }
+
+    @Test
+    public void testDeleteBooks() throws Exception {
+        // SetUp
+        doNothing().when(bookService).delete(ISBN);
+
+        // Exercise&Verify
+        mockMvc.perform(delete("/api/books/" + ISBN))
+                .andExpect(status().isOk());
+        ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
+        verify(bookService, times(1)).delete(captor.capture());
+        verifyNoMoreInteractions(bookService);
+
+        String argument = captor.getValue();
+        assertThat(argument, is(notNullValue()));
+        assertThat(argument, is(ISBN));
     }
 }

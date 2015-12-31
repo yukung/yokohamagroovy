@@ -30,7 +30,7 @@ public class BookServiceImpl implements BookService {
     }
 
     @Override
-    public void delete(Book book) {
-        repository.delete(book.getIsbn());
+    public void delete(String isbn) {
+        repository.delete(isbn);
     }
 }

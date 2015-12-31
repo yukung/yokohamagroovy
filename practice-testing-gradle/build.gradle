@@ -49,6 +49,7 @@ dependencies {
     compile "org.springframework.boot:spring-boot-starter-jdbc"
     compile "org.springframework.boot:spring-boot-starter-web"
     compile "org.springframework.boot:spring-boot-starter-thymeleaf"
+    compile "com.fasterxml.jackson.datatype:jackson-datatype-jsr310"
     compile "org.flywaydb:flyway-core"
     provided "org.projectlombok:lombok:1.16.6"
     compile "org.bgee.log4jdbc-log4j2:log4jdbc-log4j2-jdbc4.1:1.16"

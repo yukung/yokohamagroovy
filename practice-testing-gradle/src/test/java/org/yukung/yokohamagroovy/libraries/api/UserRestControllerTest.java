@@ -66,7 +66,7 @@ public class UserRestControllerTest {
         mockMvc.perform(post("/api/users")
                 .contentType(APPLICATION_JSON)
                 .content(mapper.writeValueAsString(user)))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andExpect(content().contentType(APPLICATION_JSON_UTF8))
                 .andExpect(content().json(mapper.writeValueAsString(added)));
         ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
@@ -126,7 +126,7 @@ public class UserRestControllerTest {
         mockMvc.perform(put("/api/users/" + USER_ID)
                 .contentType(APPLICATION_JSON)
                 .content(mapper.writeValueAsString(user)))
-                .andExpect(status().isCreated());
+                .andExpect(status().isOk());
         ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
         verify(userService, times(1)).update(captor.capture());
         verifyNoMoreInteractions(userService);

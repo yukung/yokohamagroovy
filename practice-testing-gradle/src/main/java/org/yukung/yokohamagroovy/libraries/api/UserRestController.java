@@ -22,6 +22,7 @@ public class UserRestController {
     private UserService userService;
 
     @RequestMapping(method = RequestMethod.POST)
+    @ResponseStatus(HttpStatus.CREATED)
     public User postUsers(@RequestBody User user) {
         return userService.create(user);
     }
@@ -32,7 +33,6 @@ public class UserRestController {
     }
 
     @RequestMapping(method = RequestMethod.PUT, path = "{id}")
-    @ResponseStatus(HttpStatus.CREATED)
     public void putUsers(@PathVariable("id") Long userId, @RequestBody User user) {
         userService.update(user);
     }

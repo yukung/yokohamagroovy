@@ -17,7 +17,7 @@ import org.yukung.yokohamagroovy.libraries.service.category.CategoryService;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 /**
@@ -52,8 +52,8 @@ public class CategoryRestControllerTest {
 
         // Exercise&Verify
         mockMvc.perform(post("/api/categories")
-        .contentType(MediaType.APPLICATION_JSON)
-        .content(mapper.writeValueAsString(category)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsString(category)))
                 .andExpect(status().isCreated())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8))
                 .andExpect(content().json(mapper.writeValueAsString(added)));
@@ -64,5 +64,25 @@ public class CategoryRestControllerTest {
         Category argument = captor.getValue();
         assertThat(argument, is(notNullValue()));
         assertThat(argument.getCategoryName(), is("test category1"));
+    }
+
+    @Test
+    public void testGetCategories() throws Exception {
+        // SetUp
+        Category category = Category.builder().categoryId(CATEGORY_ID).categoryName("test category1").build();
+        when(categoryService.find(CATEGORY_ID)).thenReturn(category);
+
+        // Exercise&Verify
+        mockMvc.perform(get("/api/categories/" + CATEGORY_ID))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8))
+                .andExpect(content().json(mapper.writeValueAsString(category)));
+        ArgumentCaptor<Long> captor = ArgumentCaptor.forClass(Long.class);
+        verify(categoryService, times(1)).find(captor.capture());
+        verifyNoMoreInteractions(categoryService);
+
+        Long argument = captor.getValue();
+        assertThat(argument, is(notNullValue()));
+        assertThat(argument, is(CATEGORY_ID));
     }
 }

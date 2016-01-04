@@ -85,4 +85,28 @@ public class CategoryRestControllerTest {
         assertThat(argument, is(notNullValue()));
         assertThat(argument, is(CATEGORY_ID));
     }
+
+    @Test
+    public void testPutCategories() throws Exception {
+        // SetUp
+        Category category = Category.builder()
+                .categoryId(CATEGORY_ID)
+                .categoryName("更新済みカテゴリ")
+                .build();
+        doNothing().when(categoryService).update(category);
+
+        // Exercise&Verify
+        mockMvc.perform(put("/api/categories/" + CATEGORY_ID)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsString(category)))
+                .andExpect(status().isOk());
+        ArgumentCaptor<Category> captor = ArgumentCaptor.forClass(Category.class);
+        verify(categoryService, times(1)).update(captor.capture());
+        verifyNoMoreInteractions(categoryService);
+
+        Category argument = captor.getValue();
+        assertThat(argument, is(notNullValue()));
+        assertThat(argument.getCategoryId(), is(CATEGORY_ID));
+        assertThat(argument.getCategoryName(), is("更新済みカテゴリ"));
+    }
 }

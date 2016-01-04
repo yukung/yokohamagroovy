@@ -31,4 +31,9 @@ public class CategoryRestController {
     public Category getCategories(@PathVariable("id") Long categoryId) {
         return categoryService.find(categoryId);
     }
+
+    @RequestMapping(value = "{id}", method = RequestMethod.PUT)
+    public void putCategories(@PathVariable("id") Long categoryId, @RequestBody Category category) {
+        categoryService.update(category);
+    }
 }

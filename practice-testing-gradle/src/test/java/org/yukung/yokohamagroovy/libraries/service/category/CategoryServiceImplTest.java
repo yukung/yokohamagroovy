@@ -90,7 +90,7 @@ public class CategoryServiceImplTest {
         when(repository.findOne(category.getCategoryId())).thenReturn(null);
 
         // Exercise
-        service.delete(category);
+        service.delete(category.getCategoryId());
 
         // Verify
         Category actual = service.find(category.getCategoryId());

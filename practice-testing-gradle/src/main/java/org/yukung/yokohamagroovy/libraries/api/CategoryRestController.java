@@ -36,4 +36,10 @@ public class CategoryRestController {
     public void putCategories(@PathVariable("id") Long categoryId, @RequestBody Category category) {
         categoryService.update(category);
     }
+
+    @RequestMapping(value = "{id}", method = RequestMethod.DELETE)
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteCategories(@PathVariable("id") Long categoryId) {
+        categoryService.delete(categoryId);
+    }
 }

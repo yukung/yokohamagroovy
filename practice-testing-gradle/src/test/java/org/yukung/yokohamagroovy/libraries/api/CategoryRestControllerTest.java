@@ -109,4 +109,21 @@ public class CategoryRestControllerTest {
         assertThat(argument.getCategoryId(), is(CATEGORY_ID));
         assertThat(argument.getCategoryName(), is("更新済みカテゴリ"));
     }
+
+    @Test
+    public void testDeleteCategories() throws Exception {
+        // SetUp
+        doNothing().when(categoryService).delete(CATEGORY_ID);
+
+        // Exercise&Verify
+        mockMvc.perform(delete("/api/categories/" + CATEGORY_ID))
+                .andExpect(status().isNoContent());
+        ArgumentCaptor<Long> captor = ArgumentCaptor.forClass(Long.class);
+        verify(categoryService, times(1)).delete(captor.capture());
+        verifyNoMoreInteractions(categoryService);
+
+        Long argument = captor.getValue();
+        assertThat(argument, is(notNullValue()));
+        assertThat(argument, is(CATEGORY_ID));
+    }
 }

@@ -60,6 +60,11 @@ dependencies {
     testCompile "org.skyscreamer:jsonassert"
 }
 
+// テストを並列実行
+test {
+    maxParallelForks = 2
+}
+
 checkstyle {
     toolVersion = '6.12.1'
 }

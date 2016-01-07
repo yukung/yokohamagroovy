@@ -36,6 +36,12 @@ sourceSets {
     main.compileClasspath += configurations.provided
     test.compileClasspath += configurations.provided
     test.runtimeClasspath += configurations.provided
+    integrationTest {
+        java.srcDir file('src/integrationTest/java')
+        resources.srcDir file('src/integrationTest/resources')
+        compileClasspath = sourceSets.main.output + configurations.testCompile
+        runtimeClasspath = output + compileClasspath + configurations.testRuntime
+    }
 }
 
 repositories {
@@ -58,11 +64,6 @@ dependencies {
     testCompile "org.dbunit:dbunit:2.4.9"
     testCompile "jp.classmethod.testing:cmtest-db:0.4"
     testCompile "org.skyscreamer:jsonassert"
-}
-
-// テストを並列実行
-test {
-    maxParallelForks = 2
 }
 
 checkstyle {
@@ -111,9 +112,32 @@ eclipse {
     }
 }
 
+test {
+    // テストを並列実行
+//    maxParallelForks = 2
+
+    // ユニットテスト用レポートディレクトリの変更
+    reports.html.destination = file("${reports.html.destination}/unit")
+    reports.junitXml.destination = file("${reports.junitXml.destination}/unit")
+}
+
+// インテグレーションテスト
+task integrationTest(type: Test, dependsOn: test) {
+    group = 'verification'
+    mustRunAfter test
+
+    testClassesDir = sourceSets.integrationTest.output.classesDir
+    classpath = sourceSets.integrationTest.runtimeClasspath
+
+    reports.html.destination = file("${reports.html.destination}/integration")
+    reports.junitXml.destination = file("${reports.junitXml.destination}/integration")
+}
+check.dependsOn integrationTest
+
 // テストコードの checkstyle, findbugs の検査はパスする
-task checkstyleTest(overwrite: true) << {}
-task findbugsTest(overwrite: true) << {}
+['checkstyleTest', 'checkstyleIntegrationTest', 'findbugsTest', 'findbugsIntegrationTest'].each { task ->
+    tasks.create(name: task, overwrite: true) << {}
+}
 
 task wrapper(type: Wrapper) {
     gradleVersion = '2.9'

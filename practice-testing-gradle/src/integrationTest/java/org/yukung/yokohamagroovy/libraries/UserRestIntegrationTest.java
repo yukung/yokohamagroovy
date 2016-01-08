@@ -1,7 +1,11 @@
 package org.yukung.yokohamagroovy.libraries;
 
+import jp.classmethod.testing.database.DbUnitTester;
+import jp.classmethod.testing.database.Fixture;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.SpringApplicationConfiguration;
 import org.springframework.boot.test.TestRestTemplate;
@@ -22,12 +26,19 @@ import static org.junit.Assert.*;
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringApplicationConfiguration(LibrariesApplication.class)
 @WebIntegrationTest(randomPort = true)
+@Fixture(resources = "/fixtures/users/users.yml")
 public class UserRestIntegrationTest {
+
+    public static final Long USER_ID = 2L;
 
     @Value("${local.server.port}")
     private int port;
 
     private RestTemplate restTemplate = new TestRestTemplate();
+
+    @Autowired
+    @Rule
+    public DbUnitTester tester;
 
     @Test
     public void testPostUser() throws Exception {
@@ -41,7 +52,8 @@ public class UserRestIntegrationTest {
                 .build();
 
         // Exercise
-        ResponseEntity<User> responseEntity = restTemplate.postForEntity("http://localhost:" + port + "/api/users", user, User.class);
+        ResponseEntity<User> responseEntity =
+                restTemplate.postForEntity(baseUrl(), user, User.class);
 
         // Verify
         assertThat(responseEntity, is(notNullValue()));
@@ -55,5 +67,27 @@ public class UserRestIntegrationTest {
         assertThat(actual.getPhoneNumber(), is("090-1111-1111"));
         assertThat(actual.getEmailAddress(), is("yamada_taro@example.com"));
         assertThat(actual.getOtherUserDetails(), is("登録対象"));
+    }
+
+    @Test
+    public void testGetUser() throws Exception {
+        // Exercise
+        ResponseEntity<User> responseEntity = restTemplate.getForEntity(baseUrl() + USER_ID, User.class);
+
+        assertThat(responseEntity, is(notNullValue()));
+        assertThat(responseEntity.getStatusCode(), is(HttpStatus.OK));
+        assertThat(responseEntity.getHeaders().getContentType(), is(MediaType.APPLICATION_JSON_UTF8));
+        User actual = responseEntity.getBody();
+        assertThat(actual, is(notNullValue()));
+        assertThat(actual.getUserId(), is(USER_ID));
+        assertThat(actual.getUserName(), is("鈴木一郎"));
+        assertThat(actual.getUserAddress(), is("神奈川県横浜市"));
+        assertThat(actual.getPhoneNumber(), is("090-2222-2222"));
+        assertThat(actual.getEmailAddress(), is("suzuki_ichiro@example.com"));
+        assertThat(actual.getOtherUserDetails(), is("テストユーザー２"));
+    }
+
+    private String baseUrl() {
+        return "http://localhost:" + port + "/api/users/";
     }
 }

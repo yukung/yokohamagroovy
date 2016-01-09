@@ -2,6 +2,8 @@ package org.yukung.yokohamagroovy.libraries;
 
 import jp.classmethod.testing.database.DbUnitTester;
 import jp.classmethod.testing.database.Fixture;
+import jp.classmethod.testing.database.YamlDataSet;
+import org.dbunit.dataset.IDataSet;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -74,6 +76,7 @@ public class UserRestIntegrationTest {
         // Exercise
         ResponseEntity<User> responseEntity = restTemplate.getForEntity(baseUrl() + USER_ID, User.class);
 
+        // Verify
         assertThat(responseEntity, is(notNullValue()));
         assertThat(responseEntity.getStatusCode(), is(HttpStatus.OK));
         assertThat(responseEntity.getHeaders().getContentType(), is(MediaType.APPLICATION_JSON_UTF8));
@@ -85,6 +88,28 @@ public class UserRestIntegrationTest {
         assertThat(actual.getPhoneNumber(), is("090-2222-2222"));
         assertThat(actual.getEmailAddress(), is("suzuki_ichiro@example.com"));
         assertThat(actual.getOtherUserDetails(), is("テストユーザー２"));
+    }
+
+    @Test
+    public void testPutUser() throws Exception {
+        // SetUp
+        User user = restTemplate.getForEntity(baseUrl() + USER_ID, User.class).getBody();
+        user.setOtherUserDetails("更新しました。");
+
+        // Exercise
+        restTemplate.put(baseUrl() + USER_ID, user);
+        User actual = restTemplate.getForEntity(baseUrl() + USER_ID, User.class).getBody();
+
+        // Verify
+        assertThat(actual, is(notNullValue()));
+        assertThat(actual.getUserId(), is(USER_ID));
+        assertThat(actual.getUserName(), is("鈴木一郎"));
+        assertThat(actual.getUserAddress(), is("神奈川県横浜市"));
+        assertThat(actual.getPhoneNumber(), is("090-2222-2222"));
+        assertThat(actual.getEmailAddress(), is("suzuki_ichiro@example.com"));
+        assertThat(actual.getOtherUserDetails(), is("更新しました。"));
+        IDataSet expected = YamlDataSet.load(getClass().getResourceAsStream("/fixtures/users/users-updated.yml"));
+        tester.verifyTable("USERS", expected);
     }
 
     private String baseUrl() {

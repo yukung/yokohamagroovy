@@ -112,6 +112,22 @@ public class UserRestIntegrationTest {
         tester.verifyTable("USERS", expected);
     }
 
+    @Test
+    public void testDeleteUser() throws Exception {
+        // SetUp
+        User user = restTemplate.getForEntity(baseUrl() + USER_ID, User.class).getBody();
+
+        // Exercise
+        restTemplate.delete(baseUrl() + USER_ID, user);
+        ResponseEntity<User> responseEntity = restTemplate.getForEntity(baseUrl() + USER_ID, User.class);
+
+        // Verify
+        assertThat(responseEntity, is(notNullValue()));
+        assertThat(responseEntity.getStatusCode(), is(HttpStatus.OK));  // 404 Not Found?
+        IDataSet expected = YamlDataSet.load(getClass().getResourceAsStream("/fixtures/users/users-deleted.yml"));
+        tester.verifyTable("USERS", expected);
+    }
+
     private String baseUrl() {
         return "http://localhost:" + port + "/api/users/";
     }

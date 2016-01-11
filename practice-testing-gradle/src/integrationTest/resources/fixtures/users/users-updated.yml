@@ -1,0 +1,8 @@
+USERS:
+-
+  USER_ID: 2
+  USER_NAME: 鈴木一郎
+  USER_ADDRESS: 神奈川県横浜市
+  PHONE_NUMBER: 090-2222-2222
+  EMAIL_ADDRESS: suzuki_ichiro@example.com
+  OTHER_USER_DETAILS: 更新しました。

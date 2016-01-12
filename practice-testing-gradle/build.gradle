@@ -12,13 +12,14 @@ buildscript {
 }
 
 plugins {
-    id "java"
+    id "groovy"
     id "checkstyle"
     id "findbugs"
     id "jacoco"
     id "eclipse"
     id "idea"
     id "org.flywaydb.flyway" version "3.2.1"
+//    id "org.akhikhl.gretty" version "1.2.4"
 }
 
 apply plugin: 'spring-boot'
@@ -39,6 +40,12 @@ sourceSets {
     integrationTest {
         java.srcDir file('src/integrationTest/java')
         resources.srcDir file('src/integrationTest/resources')
+        compileClasspath = sourceSets.main.output + configurations.testCompile
+        runtimeClasspath = output + compileClasspath + configurations.testRuntime
+    }
+    functionalTest {
+        java.srcDir file('src/functionalTest/java')
+        resources.srcDir file('src/functionalTest/resources')
         compileClasspath = sourceSets.main.output + configurations.testCompile
         runtimeClasspath = output + compileClasspath + configurations.testRuntime
     }
@@ -64,6 +71,10 @@ dependencies {
     testCompile "org.dbunit:dbunit:2.4.9"
     testCompile "jp.classmethod.testing:cmtest-db:0.4"
     testCompile "org.skyscreamer:jsonassert"
+    // functional test
+    testCompile 'org.spockframework:spock-spring:1.0-groovy-2.4'
+    testCompile 'org.gebish:geb-spock:0.10.0'
+    testCompile 'org.seleniumhq.selenium:selenium-firefox-driver:2.49.0'
 }
 
 checkstyle {
@@ -83,6 +94,14 @@ flyway {
     user = "sa"
     password = ""
 }
+
+// gretty だと Spring Boot の組み込みサーバの WebApplicationContext を奪ってしまい
+// spring-boot-gradle-plugin で動かなくなってしまう
+//gretty {
+//    springBoot = false
+//    servletContainer = 'tomcat8'
+//    integrationTestTask = 'functionalTest'
+//}
 
 jar {
     baseName = 'libraries'
@@ -137,6 +156,20 @@ check.dependsOn integrationTest
 // テストコードの checkstyle, findbugs の検査はパスする
 ['checkstyleTest', 'checkstyleIntegrationTest', 'findbugsTest', 'findbugsIntegrationTest'].each { task ->
     tasks.create(name: task, overwrite: true) << {}
+}
+
+// ファンクショナルテスト
+task functionalTest(type: Test) {
+    group = "verification"
+
+    testClassesDir = sourceSets.functionalTest.output.classesDir
+    classpath = sourceSets.functionalTest.runtimeClasspath
+
+    reports.html.destination = file("${reports.html.destination}/functional")
+    reports.junitXml.destination = file("${reports.junitXml.destination}/functional")
+
+    systemProperty 'geb.env', 'firefox'
+    systemProperty 'geb.build.reportsDir', reporting.file('geb')
 }
 
 task wrapper(type: Wrapper) {

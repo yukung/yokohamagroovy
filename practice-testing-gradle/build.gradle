@@ -154,7 +154,13 @@ task integrationTest(type: Test, dependsOn: test) {
 check.dependsOn integrationTest
 
 // テストコードの checkstyle, findbugs の検査はパスする
-['checkstyleTest', 'checkstyleIntegrationTest', 'findbugsTest', 'findbugsIntegrationTest'].each { task ->
+['checkstyleTest',
+ 'checkstyleIntegrationTest',
+ 'checkstyleFunctionalTest',
+ 'findbugsTest',
+ 'findbugsIntegrationTest',
+ 'findbugsFunctionalTest'
+].each { task ->
     tasks.create(name: task, overwrite: true) << {}
 }
 

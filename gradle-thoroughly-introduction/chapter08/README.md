@@ -333,3 +333,8 @@ task testForHeapEater(type: Test) {
     maxHeapSize = '1g'
 }
 ```
+
+## Gradle での自動テスト
+
+単一のクラスをテストするユニットテスト、複数のクラスを統合してテストするインテグレーションテスト、エンドツーエンドで全体の機能をテストするファンクショナルテストを記述した[サンプルプロジェクト](https://github.com/yukung/yokohamagroovy/tree/master/practice-testing-gradle)を作成したので、そちらの構成を参照のこと。
+

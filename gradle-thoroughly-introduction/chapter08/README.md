@@ -338,3 +338,125 @@ task testForHeapEater(type: Test) {
 
 単一のクラスをテストするユニットテスト、複数のクラスを統合してテストするインテグレーションテスト、エンドツーエンドで全体の機能をテストするファンクショナルテストを記述した[サンプルプロジェクト](https://github.com/yukung/yokohamagroovy/tree/master/practice-testing-gradle)を作成したので、そちらの構成を参照のこと。
 
+## テストに関するその他の機能
+
+### ログ出力の制御
+
+- 通常 Gradle でログ出力を制御したい場合は、起動オプションでログレベルを変更するが、この設定はビルドフェーズ全体に反映される
+- 例えばテスト実行時だけ標準出力やスタックトレースを出力させたいという場面もある
+- テスト対象クラスに実装されたログ出力をコンソールに出力したい場合は次のようにする
+
+```gradle
+test {
+    testLogging {
+        showStandardStreams = true
+    }
+}
+```
+
+- これを応用してログにタイムスタンプを出力させれば、簡易的な性能ログをレポートに書き出せる
+- 他にも、テスト実行時のイベントログを詳細に出力する設定もある
+
+```gradle
+test {
+    testLogging {
+        events 'started', 'skipped', 'failed'
+    }
+}
+```
+
+- 上記のようにすると、`FAILED` だけでなく `STARTED` や `SKIPPED` が出力される
+- さらに `displayGranularity` プロパティをの値を変更すると、実行対象のテストクラス名とテストメソッド名の粒度を変更することもできる 
+- 上手く設定すればイベントログが見やすくなる
+
+### テストレポート出力の制御
+
+- テストレポートは通常テストタスクの単位で出力することが多い
+- 個別のテストレポートの他に、集約されたサマリーのレポートが必要な場合もある
+- 集約されたサマリーだけあれば良いという場合も
+- テストレポートをマージしたり、出力を止めたりすることもできる
+- テストレポートをマージする場合は、`TestReport` 型でタスクを定義する
+
+```gradle
+sourceSets {
+    sub {
+        java.srcDir file('src/sub/java')
+        compileClasspath = configurations.compile
+    }
+    subTest {
+        java.srcDir file('src/subTest/java')
+        compileClasspath = sourceSets.sub.output + configurations.testCompile
+        runtimeClasspath = output+ compileClasspath + configuraitons.testRuntime
+    }
+}
+
+test {
+    description = 'src/main/javaに対するテストを実行します'
+    
+    reports.html.destination = file("${reports.html.destination}/unit-main")
+    reports.junitXml.destination = file("${reports.junitXml.destination}/unit-main")
+}
+
+task subTest(type: Test) {
+    description = 'src/sub/javaに対するテストを実行します'
+    group = 'verification'
+    
+    testClassDir = sourceSets.subTest.output.classesDir
+    classpath = sourceSets.subTest.runtimeClasspath
+    
+    reports.html.destination = file("${reports.html.destination}/unit-sub")
+    reports.junitXml.destination = file("${reports.junitXml.destination}/unit-sub")
+}
+```
+
+- テスト結果をマージしたプロジェクト全体のサマリーは次のような定義を行う
+
+```gradle
+task summaryTestReports(type: TestReport, dependsOn: [test, subTest]) {
+    destinationDir = file("${buildDir}/reports/tests/unit-summary")
+    reportOn test, subTest
+}
+
+check.dependsOn summaryTestReports
+```
+
+- 個別のテストレポートは省略し、サマリーだけ出力する例
+
+```gradle
+test {
+    reports.html.enabled = false
+}
+
+task subTest(type: Test) {
+    reports.html.enabled = false
+}
+```
+
+### デバッグモードでのテスト
+
+- Gradle ではテスト実行プロセスをデバッグモードで実行することができる
+- 仕組みとしては、JavaVM のデバッグモードを Gradle で簡潔に指定出来るだけのこと
+- 通常の Java でデバッグ起動する場合は、`-Xdebug`, `-Xrunjdwp` の Java VM オプションを指定する必要がある
+
+```console
+-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=<接続ポート>
+```
+
+- Gradle のデバッグモードでは2通りの指定方法があるが、どちらも簡単
+- 1つ目は`debug` プロパティを有効にするだけ
+
+```gradle
+test {
+    debug true
+}
+```
+
+- 2つ目は実行時に `--debug-jvm` をタスクオプションとして追加する
+- ただし、Gradle のデバッグモードでは接続ポートが `5005` 固定になるので、変更する場合は通常の JavaVM オプションで指定する必要がある
+
+```console
+$ gradle test --debug-jvm
+```
+
+- この状態で、任意の IDE 上でブレークポイントを設定してリモートデバッグ接続を開始すれば、IDE 上でデバッグができる
+- `--debug-jvm` オプションは、Gradle 1.12 から追加された機能だが、それ以前は `-D<テストタスク>.debug` というコマンド引数を指定すると同様のデバッグが出来た。しかしこれは `Test` タスクにのみ有効であり、`--debug-jvm` オプションは `Test` タスクに加えて `JavaExec` タスクにも有効なので、上位互換と考えて良い。そのため、Gradle 1.12 以上では `--debug-jvm` オプションを使えば良い。

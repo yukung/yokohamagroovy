@@ -78,3 +78,80 @@ task docsZip(type: Zip) {
 org.apache.tools.ant.DirectoryScanner.removeDefaultExclude("**/.gitignore")
 ```
 
+### CopySpec と入れ子のアーカイブ設定
+
+`from()`, `into()`, `include()`, `includeEmptyDirs` などは、コピータスクや `processResources` などでも設定できた。これは、アーカイブタスクも同様に `CopySpec` インタフェースを実装しているため。
+
+また、`CopySpec` に従ったタスクは入れ子にすることができるため、アーカイブタスクも設定を入れ子にできる。
+
+### アーカイブ時にファイルをリネームする
+
+`CopySpec` の `rename()` を使う。
+
+```gradle
+rename { originalName ->
+    if (originalName == "index.html")
+        return "index-${new Date().format("yyyyMMddHHmm")}.html"
+}
+rename(/THEME_${docTheme}-(.*\.css)/, '$1') // THEME_BLUE-main.css -> main.css にリネーム
+```
+
+### アーカイブ時にファイルの内容を変更する
+
+`CopySpec` の `filter()` や `expand()` を使う。
+
+```gradle
+filter { line ->
+    line.replaceAll(/yukung/, 'Yusuke Ikeda')
+}
+// タブをスペースに変換
+filter org.apache.tools.ant.filters.TabsToSpaces, tablength: 2
+// テンプレート展開
+// アーカイブ時に読み込まれたファイルの <%= version %> というプレースホルダをプロジェクトバージョンの値で置換する
+expand version: project.version
+```
+
+### アーカイブファイルの出力先設定
+
+アーカイブの出力先やファイル名は、`baseName` などのタスクプロパティを元に決定される。
+
+```gradle
+// <プロジェクトディレクトリ>/project-src.zip に出力
+baseName = "project-src"
+from("src/groovy") {
+    include "**/*.groovy"
+}
+```
+
+`baseName` の他に以下が設定でき、それによってアーカイブファイル名が決定される。
+
+* `baseName`
+* `destinationDir`
+* `appendix`
+* `version`
+* `classifier`
+* `extension`
+
+```
+<destinationDir>
+  └ <baseName>-<appendix>-<version>-<classifier>.<extension>
+```
+
+また、`archiveName` が設定されている場合は上記の指定は無視して、`archiveName` を優先する。
+
+```
+<destinationDir>
+  └ <archiveName>
+```
+
+#### プラグインによるアーカイブアスクの自動設定
+
+Gradle の内部プラグインである `Base` プラグインを適用すると（多くの組み込みプラグインから内部的に利用されている）、プロジェクトに存在する全てのアーカイブタスクに以下の様なデフォルト設定が適用される。
+
+* `destinationDir`
+    * `<プロジェクトディレクトリ>/build/distributions`
+* `baseName`
+    * プロジェクト名
+* `version`
+    * プロジェクトのバージョン
+

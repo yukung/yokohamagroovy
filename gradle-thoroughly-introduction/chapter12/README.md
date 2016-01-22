@@ -155,3 +155,49 @@ Gradle の内部プラグインである `Base` プラグインを適用する�
 * `version`
     * プロジェクトのバージョン
 
+## アーカイブ形式固有の設定
+
+### ZIP ファイル
+
+`Zip` タスクを使用する。
+
+```gradle
+task docsZip(type: Zip) {
+  // タスクの設定（zipファイル出力先、圧縮レベルなど）
+  baseName = "project-docs"
+  entryCompression = ZipEntryCompression.STORED
+
+  // アーカイブの構成
+  // 「docs」エントリに「src/dist」ディレクトリとembedded.zipからhtml、css、jsファイルを全て追加
+  into ("docs") {
+    from (zipTree("src/dist/embedded.zip")) {
+      include "**/*.html", "**/*.css", "**/*.js"
+    }
+    from ("src/dist") {
+      include "**/*.html", "**/*.css", "**/*.js"
+    }
+  }
+}
+```
+
+### TAR ファイル
+
+`Tar` タスクを使用する。
+
+```gradle
+task docsTar(type: Tar) {
+  baseName = "project-docs"
+  compression = Compression.BZIP2 // 圧縮方法の設定
+
+  // アーカイブの構成
+  into ("docs") {
+    from (zipTree("src/dist/embedded.zip")) {
+      include "**/*.html", "**/*.css", "**/*.js"
+    }
+    from ("src/dist") {
+      include "**/*.html", "**/*.css", "**/*.js"
+    }
+  }
+}
+```
+

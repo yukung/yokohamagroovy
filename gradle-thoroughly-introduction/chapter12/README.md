@@ -201,3 +201,71 @@ task docsTar(type: Tar) {
 }
 ```
 
+### JAR ファイル
+
+`Jar` タスクを使用する。`Zip` タスクを継承しており、基本的には `Zip` タスクと同じように使用できる。違いは、JAR ファイルに含めるマニフェストファイルを設定できること。
+
+```gradle
+version = 1.0
+
+task sourcesJar(type: Jar) {
+  // タスクの設定（jarファイル出力先など）
+  baseName = "my-library"
+  appendix = "sources"
+  destinationDir = file("build")
+
+  // アーカイブの構成
+  from("src/main/java") {
+    include "**/*.java", "**/*.groovy", "**/*.xml"
+  }
+  // マニフェストファイルの設定
+  manifest {
+    attributes("Built-By": "Gradle", "Implementation-Version": project.version)
+  }
+}
+```
+
+### WAR ファイル
+
+`War` タスクを使用する。`Jar` タスクの機能に加えて、`web.xml` や `WEB-INF` ディレクトリ、`WEB-INF/lib` に JAR ファイルを加える機能が追加されている。
+
+```gradle
+version = 1.0
+
+task myWar(type: War) {
+    // タスクの設定（ファイル出力先など）
+    baseName = "my-war"
+    destinationDir = file("build")
+
+    // アーカイブの構成
+    from("webapp") {
+      include "**/*.html", "**/*.js", "**/*.css"
+    }
+    // ライブラリJARの設定
+    classpath fileTree("lib")
+    // WEB-INFの構成
+    webInf {
+      into("classes") {
+        from ("out") {
+          include "**/*.class"
+        }
+      }
+    }
+
+    webXml file("web.xml")
+
+    manifest {
+     attributes("Built-By": "Gradle", "Implementation-Version": project.version)
+   }
+}
+```
+
+* `classpath()`
+    * `FileCollection` 型の引数を渡すと、その内容を `WEB-INF/lib` 直下に格納する。引数で指定した対象のディレクトリ構成は無視されて、フラットな状態で `WEB-INF/lib` に配置される
+* `webInf()`
+    * `CopySpec` に従ったクロージャを渡すことで、`WEB-INF` ディレクトリの内容を自由に設定できる
+* `webXml()`
+    * 好きな `web.xml` ファイルを `WEB-INF` 直下に出力できる
+
+また、自分で `War` タスクを定義しなくても、`War` プラグインを適用することで予め一般的な設定が適用された `war` という名前の `War` タスクが作成される。
+

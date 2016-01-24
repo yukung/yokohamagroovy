@@ -269,3 +269,27 @@ task myWar(type: War) {
 
 また、自分で `War` タスクを定義しなくても、`War` プラグインを適用することで予め一般的な設定が適用された `war` という名前の `War` タスクが作成される。
 
+## Distribution プラグイン
+
+`Distribution` プラグインを使うと、自分でアーカイブタスクを書かなくても簡単にアーカイブを作成できる。
+
+以下のタスクがプロジェクトに追加される。
+
+| タスク名 | タスクの種類 | タスク実行時の処理 |
+| -------- | ------------ | ------------------ |
+| `distZip` | `Zip` | `<buildDir>/distributions/<project.name>-<project.version>.zip` に ZIP ファイルが作成される |
+| `distTar` | `Tar` | `<buildDir>/distributions/<project.name>-<project.version>.tar` に TAR ファイルが作成される |
+| `installDist` | `Sync` | `<buildDir>/install/main` にアーカイブを展開してコピーする |
+
+```gradle
+apply plugin: 'distribution'
+distributions {
+    main {
+        baseName = 'new-archive-name'
+        contents {
+            from { 'src/readme' }
+        }
+    }
+}
+```
+

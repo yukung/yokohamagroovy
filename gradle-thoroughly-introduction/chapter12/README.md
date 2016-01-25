@@ -293,3 +293,259 @@ distributions {
 }
 ```
 
+## Gradle によるファイルの公開
+
+作成したアーカイブをリモートもしくはローカルのリポジトリに公開し他のシステムから利用できるようにする方法を以下に記述。Gradle でファイルを公開するには、組み込みプラグインの `Maven Publish` プラグインおよび `Ivy Publish` プラグインを使う。
+
+それぞれのプラグインは `Publishing` プラグインを継承しているため、基本的な使い方は変わらず、固有の設定箇所だけが異なっている設計になっている。
+
+## モジュールの定義
+
+Gradle が取り扱う Maven/Ivy リポジトリは、**モジュール**という単位でファイルを扱う。モジュールには、アーティファクトと呼ばれるモジュールの実体ファイルと、モジュールに関する情報が記述されたメタデータファイル（POM や `ivy.xml`）が含まれている。メタデータに記述されるのはモジュールのグループ名やバージョン、開発者の連絡先、依存関係など。
+
+Gradle でファイルを公開する際も、次のような流れでファイルを公開することになる。
+
+1. モジュールを定義し
+2. 定義したモジュールにファイルをアーティファクトとして登録し
+3. アーティファクトに関するメタデータを編集し
+4. そのモジュールをリポジトリに公開する
+
+Gradle では、ソフトウェアコンポーネントという概念が存在し、プロジェクトにこの概念を自動的に追加するプラグインがいくつか存在する。ソフトウェアコンポーネントは、アーティファクトとその依存関係に関する情報が含まれており、これをモジュールに登録することで依存関係が一括で指定できる。これにより上記 2, 3 にかかる手間を減らすことが出来る。自分でスクラッチに書くことも可能だが、ソフトウェアコンポーネントを使って登録したほうが楽なのでこれを使ったほうが良い。
+
+#### Maven Publish プラグイン、Ivy Publish プラグインの制限
+
+Gradle 1.4 から追加されたプラグインだが、それ以前は `Maven` プラグインを使っていた。これは将来的に置き換えられるはずだが、旧版のプラグインで出来ていたことが新版ではできなくなっていることがある。そのため場合によっては `Maven` プラグインを使わなければならない場合もある。
+
+`Maven/Ivy Publish` プラグインで出来ないことの一つが、対応プロトコルで、例えば `Maven Publish` プラグインは `file` プロトコルと `http(s)` プロトコルでしかファイルをアップロード出来ない。（`Ivy Publish` プラグインは Gradle 2.0 から `SFTP` でもアップロードできるようになった）
+
+`WebDAV` や `SFTP` などでリポジトリにファイルを転送することは新版のプラグインでは出来ないので、これらのプロトコルを使わざるをえない場合は、`maven` プラグインを使うしかない。`Nexus`, `Artifactory`, `Archiva` といった一般的なリポジトリツールであれば `http(s)` は対応している。
+
+Maven Central リポジトリは、ファイルに署名する必要がある関係で `Maven Publish` プラグインで直接公開することは出来ない。そのため JCenter Maven リポジトリをゲートウェイに使って転送する方法がある。
+
+### ソフトウェアコンポーネントを登録する
+
+ソフトウェアコンポーネントはアーティファクトとそれが依存するファイルをグループ化する概念。特定のプラグインを適用することで自動的にそのビルドに追加される。
+
+例えば、`Java` プラグインを適用した場合、ビルドによって作成された JAR ファイルと、JAR ファイルの実行に必要な依存関係をまとめた `java` という名前のソフトウェアコンポーネントがビルドに追加される。
+
+追加されたソフトウェアコンポーネントは次のように `components.<ソフトウェアコンポーネント名>` でアクセスできる。
+
+```gradle
+apply plugin: "java"
+
+repositories {
+  mavenCentral()
+}
+
+dependencies {
+  runtime "org.apache.commons:commons-lang3:3.3.1"
+}
+
+task showSoftwareComponent << {
+  // ソフトウェアコンポーネント「java」の情報を出力
+
+  println "---Artifacts---"
+  for (a in components.java.usages.artifacts) {
+    println a.file //-> <プロジェクト>/build/libs/<プロジェクト名>.jar
+  }
+
+  println "---Dependencies---"
+  for (d in components.java.usages.dependencies) {
+    println d //-> "org.apache.commons:commons-lang3:3.3.1"に関する情報
+  }
+}
+```
+
+このソフトウェアコンポーネントを、ビルドが公開するモジュールに登録するには、`Maven Publish` プラグインまたは `Ivy Publish` プラグインを適用し、`publishing` ブロックを使用する。
+
+```gradle
+apply plugin: "java"
+apply plugin: "maven-publish" // Ivyリポジトリへ公開する場合はivy-publishを適用
+
+group = "com.example"
+version = 0.1
+
+repositories {
+  mavenCentral()
+}
+
+dependencies {
+  runtime "org.apache.commons:commons-lang3:3.3.1"
+}
+
+publishing { // 公開設定
+  publications {
+    mod1(MavenPublication) { // <mod1>は任意のモジュール識別名。Ivyの場合はIvyPublication
+      from components.java // ソフトウェアコンポーネント「java」をモジュールに登録
+    }
+  }
+}
+```
+
+```gradle
+apply plugin: "java"
+apply plugin: "ivy-publish" // Ivy Publishプラグインを適用
+
+// ...
+
+group = "com.example"
+version = 0.1
+
+repositories {
+  mavenCentral()
+}
+
+dependencies {
+  runtime "org.apache.commons:commons-lang3:3.3.1"
+}
+
+publishing { // 公開設定
+  publications {
+    mod1(IvyPublication) { // <mod1>は任意のモジュール識別名
+      from components.java // ソフトウェアコンポーネント「java」を公開対象に指定する
+    }
+  }
+}
+```
+
+上記の例はまだ公開先リポジトリの指定をしていないので、実際に公開することはできないが、`Maven Publish` プラグインの場合はローカルリポジトリへインストールできる。`publish<モジュール識別名>MavenLocal` というタスクを実行すると行える。`Maven/Ivy Publish` プラグインは、 `publishing` ブロックに定義したモジュール識別名に応じて動的にタスクを追加する。
+
+```console
+$ gradle publishMod1PublicationToMavenLocal
+```
+
+上記を実行すると、`~/.m2/repository` 配下にグループ名、プロジェクト名、バージョンごとのディレクトリに JAR と POM ファイルが出力される。
+
+現在組み込みのソフトウェアコンポーネントは Java プラグインが追加する `java` と、War プラグインが追加する `web` の2つのみ。
+
+### アーティファクトを登録する
+
+任意のファイルをモジュールのアーティファクトとして直接指定することで、外部に公開するファイルを追加することができる。この機能は、ソフトウェアコンポーネントを提供するプラグインを使用していない場合や、ソフトウェアコンポーネントのアーティファクト以外のファイルを追加で公開したい時に使う。以下は Java プラグインを使用していない場合の定義例。
+
+```gradle
+apply plugin: "maven-publish" // Maven Publishプラグインを適用
+
+group = "com.example"
+version = 0.1
+
+publishing {
+  publications {
+    docs(MavenPublication) {
+      artifactId 'project-docs-list'  // 未指定の場合は project.name が使用される
+      artifact('my-docs-index.htm') { // artifact()メソッドでファイルを直接アーティファクトに指定
+        extension 'html'
+      }
+    }
+  }
+}
+```
+
+ファイルをモジュールのアーティファクトとして指定するには `publications` ブロックで `artifact()` を使用する。`artifact()` の用途として一番良く挙げられる例は、Java ライブラリとともに公開されることが多いソースコードの JAR ファイルや Javadoc の JAR ファイルを公開するパターン。
+
+```gradle
+apply plugin: "java"
+apply plugin: "maven-publish" // Ivyリポジトリへ公開する場合はivy-publishを適用
+
+//...
+
+group = "com.example"
+version = 0.1
+
+repositories {
+  mavenCentral()
+}
+
+dependencies {
+  runtime "org.apache.commons:commons-lang3:3.3.1"
+}
+
+task sourceJar(type: Jar) {
+  classifier 'sources'
+  from sourceSets.main.allJava // ソースセットを入力ファイルに設定
+}
+task javadocJar(type: Jar, dependsOn: javadoc) {
+  classifier 'javadoc'
+  from javadoc.destinationDir // Javadocのターゲットディレクトリを入力ファイルに設定
+}
+
+publishing {
+  publications {
+    mod1(MavenPublication) { // <mod1>は任意のモジュール識別名
+      from components.java // ソフトウェアコンポーネント「java」を公開対象に指定する
+      // artifact()メソッドで公開するアーカイブやファイルを指定する
+      artifact(sourceJar) // タスクを指定すると、タスクによる出力ファイルが公開される
+      artifact(javadocJar)
+    }
+  }
+}
+```
+
+Ivy でも同様。
+
+```gradle
+apply plugin: "java"
+apply plugin: "ivy-publish" // Ivy Publishプラグインを適用
+
+//...
+
+group = "com.example"
+version = 0.1
+
+repositories {
+  mavenCentral()
+}
+
+dependencies {
+  runtime "org.apache.commons:commons-lang3:3.3.1"
+}
+
+task sourceJar(type: Jar) {
+  classifier 'sources'
+  from sourceSets.main.allJava // ソースセットを入力ファイルに設定
+}
+task javadocJar(type: Jar, dependsOn: javadoc) {
+  classifier 'javadoc'
+  from javadoc.destinationDir
+}
+
+publishing {
+  publications {
+    mod1(IvyPublication) { // <mod1>は任意のモジュール識別名
+      from components.java // ソフトウェアコンポーネント「java」を公開対象に指定する
+      // artifact()メソッドで公開するアーカイブやファイルを指定する
+      artifact(sourceJar) { // タスク名を指定すると、タスクによる出力ファイルが公開される
+        type 'source'
+      }
+      artifact(javadocJar) {
+        type 'doc'
+      }
+    }
+  }
+}
+```
+
+`artifact()` を使うと、プラグインで指定されたソフトウェアコンポーネントだけでなく、任意のアーティファクトをモジュールに追加してプロジェクトが公開するファイルを細かく調整できる。
+
+#### `artifact()` について
+
+`artifact()` の引数には、アーティファクトの `classfier` や `extension` といった属性を保持する `PublishArtifact` というクラスのインスタンスを渡すことができるが、自分でこのクラスのインスタンスを作って渡すことはあまりない。`artifact()` には他にも次のインスタンスを渡せる。
+
+* アーカイブタスク
+    * 渡せるタスクは、`AbstractArchiveTask` を継承したタスク、つまり `Zip` や `Jar` タスク。
+    * `classifier` および `extension` はアーカイブタスクのタスクプロパティから取得される
+* `File` インスタンス
+    * 正確には Gradle 組み込みの `file()` によって `File` インスタンスに変換できるオブジェクトであれば渡すことができる。
+    * `classfier` および `extension` はファイル名から決定される
+
+これらのインスタンスを渡した場合、上記のようにアーティファクトの属性は渡したインスタンスから自動的に設定される。しかしモジュールのアーティファクトとして公開するということで、さらにアーティファクトの属性を調整したいことがある。以下のように `artifact()` の引数にクロージャを渡すことで、アーティファクトの属性を調整できる。
+
+```gradle
+artifact('my-docs-index.htm') {
+    extension 'html'
+}
+```
+
+Maven モジュール、つまり `MavenPublication` を使って定義したモジュールの場合、`artifact()` で調整できる属性は `classifier` と `extension` のみ。
+
+Ivy モジュール、つまり `MavenPublication` を使って定義したモジュールの場合は、`artifact()` のクロージャでさらに `name`, `type`, `conf` を指定できる。
+

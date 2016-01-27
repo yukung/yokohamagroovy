@@ -547,5 +547,590 @@ artifact('my-docs-index.htm') {
 
 Maven モジュール、つまり `MavenPublication` を使って定義したモジュールの場合、`artifact()` で調整できる属性は `classifier` と `extension` のみ。
 
-Ivy モジュール、つまり `MavenPublication` を使って定義したモジュールの場合は、`artifact()` のクロージャでさらに `name`, `type`, `conf` を指定できる。
+Ivy モジュール、つまり `IvyPublication` を使って定義したモジュールの場合は、`artifact()` のクロージャでさらに `name`, `type`, `conf` を指定できる。
 
+### メタデータのカスタマイズ
+
+モジュールのメタデータ、すなわち `pom.xml` や `ivy.xml` をカスタマイズすることができる。基本的にこれらのメタデータはプロジェクトのプロパティから自動的に作成されるが、ビルドスクリプト上で細かくカスタマイズすることもできる。
+
+#### POM ― Maven Publish プラグインの場合
+
+POM を変更するには、`MavenPublication` ブロック内でプロパティを設定する。POM のうち、`artifactId`, `groupId`, `version` に関してはデフォルト値としてプロジェクトのプロパティが設定されるが、変更する場合も `MavenPublication` ブロックでプロパティを設定するだけ。それ以外の POM 要素を変更するには、`pom` というプロパティを通じて直接 XML を編集する。
+
+```gradle
+apply plugin: "java"
+apply plugin: "maven-publish"
+
+group = "com.example"
+version = 0.1
+
+// ...
+
+repositories {
+  mavenCentral()
+}
+
+dependencies {
+  runtime "org.apache.commons:commons-lang3:3.3.1"
+}
+
+publishing { // 公開設定
+  publications {
+    mod1(MavenPublication) {
+      from components.java
+      artifactId = "my-maven-mod1" // 未指定の場合は project.name が使用される
+      groupId = "com.example.maven" // 未指定の場合は project.group が使用される
+      version = "0.1-a" // 未指定の場合は project.version が使用される
+
+      pom.withXml { xml ->
+        final myPom = {
+          packaging "jar"
+          nama "My Sample Project"
+          description "サンプルプロジェクト バージョン$version"
+          licenses {
+            license {
+              name "The Apache Software License, Version 2.0"
+              url "http://www.apache.org/licenses/LICENSE-2.0.txt"
+              distribution "repo"
+            }
+          }
+        }
+        // description などプロジェクトのプロパティと被ったときの対策
+        myPom.resolveStrategy = Closure.DELEGATE_FIRST
+
+        xml.asNode().children().last() + myPom
+      }
+    }
+  }
+}
+```
+
+`pom.withXml()` に POM を変更するためのクロージャを渡すことができる。操作は Groovy の XML 操作（`MarkupBuilder`）なので、その知識があれば問題ない。逆に言うとタグ名などを間違ってしまってもそのまま出力されるため、注意が必要。
+
+クロージャに対して `resolveStrategy` プロパティを `Closure.DELEGATE_FIRST` に設定すると、プロパティ名が Gradle のものと被った時にクロージャ側のものを優先するように設定できる。
+
+#### ivy.xml ― Ivy Publish プラグインの場合
+
+Ivy の場合も Maven と同様、`IvyPublication` ブロック内でプロパティを設定するだけでよい。ivy.xml のうち、`info` 要素の `module.organisation`, `revision` に関しては `IvyPublication` ブロック内でプロパティを設定するだけで変更できる。それ以外の要素を変更するには、`descriptor` というプロパティを通じて直接 XML を編集する。
+
+```gradle
+apply plugin: "java"
+apply plugin: "ivy-publish"
+
+group = "com.example"
+version = 0.1
+
+// ...
+
+repositories {
+  mavenCentral()
+}
+
+dependencies {
+  runtime "org.apache.commons:commons-lang3:3.3.1"
+}
+
+publishing { // 公開設定
+  publications {
+    mod1(IvyPublication) {
+      from components.java
+      module = "my-maven-mod1" // 未指定の場合は project.name が使用される
+      organisation = "com.example.maven" // 未指定の場合は project.group が使用される
+      revision = "0.1-a" // 未指定の場合は project.version が使用される
+
+      descriptor.withXml { xml ->
+        final infoNode = xml.asNode().info[0]
+        final licenseNode = {
+          license {
+            name "The Apache Software License, Version 2.0"
+            url "http://www.apache.org/licenses/LICENSE-2.0.txt"
+          }
+        }
+        licenseNode.resolveStrategy = Closure.DELEGATE_FIRST
+
+        infoNode.appendNode("description", "サンプルプロジェクト バージョン$version")
+        infoNode.description + licenseNode
+      }
+    }
+  }
+}
+```
+
+## モジュールの公開
+
+### 公開先リポジトリの設定
+
+公開先リポジトリを設定するには、Maven Publish プラグインまたは Ivy Publish プラグインを適用し、`publishing/repositories` ブロックで設定する。以下に例を挙げる。
+
+```gradle
+apply plugin: "java"
+apply plugin: "maven-publish" // Maven Publishプラグインを適用
+
+//..
+
+group = "com.example"
+version = 0.1
+
+repositories {
+  mavenCentral()
+}
+
+dependencies {
+  runtime "org.apache.commons:commons-lang3:3.3.1"
+}
+
+task sourceJar(type: Jar) {
+  from sourceSets.main.allJava // ソースセットを入力ファイルに設定
+}
+
+publishing { // 公開設定
+  publications {
+    mod1(MavenPublication) { // <mod1>は任意のモジュール識別名
+      from components.java // ソフトウェアコンポーネント「java」を公開対象に指定する
+      // artifact()メソッドで公開するアーカイブやファイルを指定する
+      artifact sourceJar {
+        classifier "sources"
+      }
+    }
+  }
+
+  repositories {
+    maven {
+      name "local1" // リポジトリ名。省略した場合は「maven」
+      url "build/repo1" // ディレクトリを指定
+    }
+    maven {
+      name "remote1" // リポジトリ名。省略した場合は「maven」
+      url "http://localhost:8081/artifactory/repo1" // リポジトリのURLを指定
+    }
+  }
+}
+```
+
+### 公開に使うタスク
+
+Maven Publish プラグインおよび Ivy Publish プラグインは、`publishing` ブロックで定義されたモジュールとリポジトリに応じて、モジュール公開用のタスクを動的にプロジェクトに追加する。
+
+```
+publish<モジュール識別名>PublicationTo<リポジトリ名>Repository
+```
+
+というタスクが追加される。先の例では
+
+* `publishMod1PublicationToLocal1Repository`
+* `publishMod1PublicationToRemote1Repository`
+
+というタスクが追加され、それぞれ `repositories` ブロック内で定義した `local1`, `remote1` のリポジトリの指定 URL に公開される。`local1` では `build/repo1` ディレクトリにモジュールが出力される。`remote1` では指定の URL に HTTP の PUT メソッドでモジュールが転送される。そのためリポジトリが Artifactory などリポジトリ管理ツールで運用されている必要がある。
+
+ちなみにタスク追加の際、Maven Publish プラグインは `maven()` で設定された Maven リポジトリのみを、Ivy Publish プラグインは `ivy()` で設定された Ivy リポジトリのみを参照するため、フラットディレクトリリポジトリを定義しても、使用されることはない。
+
+認証情報は `credentials` ブロックで設定できる。
+
+#### SFTP でモジュールをアップロードする
+
+Maven Publish プラグインは `file` プロトコルと `http(s)` プロトコルにしか対応していないので、`WebDAV` や `SFTP` で運用しているリポジトリは利用できない。ただし、Ivy Publish プラグインに関しては Gradle 2.0 以降であれば、加えて `SFTP` でもモジュールを転送できる。`SFTP` でモジュールを転送するには、リポジトリの URL を `sftp://...` で定義する。
+
+```gradle
+apply plugin: "java"
+apply plugin: "ivy-publish" // Ivy Publishプラグインを適用
+
+//..
+
+group = "com.example"
+version = 0.1
+
+repositories {
+  mavenCentral()
+}
+
+dependencies {
+  runtime "org.apache.commons:commons-lang3:3.3.1"
+}
+
+task sourceJar(type: Jar) {
+  from sourceSets.main.allJava // ソースセットを入力ファイルに設定
+}
+
+publishing { // 公開設定
+  publications {
+    mod1(IvyPublication) { // <mod1>は任意のモジュール識別名
+      from components.java // ソフトウェアコンポーネント「java」を公開対象に指定する
+      // artifact()メソッドで公開するアーカイブやファイルを指定する
+      artifact sourceJar {
+        classifier "sources"
+      }
+    }
+  }
+
+  repositories {
+    ivy {
+      credentials {
+        username 'my-name'
+        password 'xxxxxx'
+      }
+      url "sftp://localhost:22/tmp/repo1" // sftpスキームでリポジトリを定義
+    }
+  }
+}
+```
+
+なお、公開鍵認証にはまだ対応していない。
+
+## Bintray / JCenter Maven リポジトリへの公開
+
+### Bintray でリポジトリを作成する
+
+Bintray 上のリポジトリは、**パッケージ**という単位で分割されている。ただし、Bintray を Maven リポジトリとして使うときにはパッケージは意識しない。
+
+一方で、Bintray へモジュールをアップロードするにはまず Bintray でモジュールをホストするリポジトリとパッケージを作成する必要がある。
+
+### Bintray のパッケージを作成する
+
+パッケージには名前とライセンスを記入する。
+
+### Gradle Bintray プラグイン
+
+作成したパッケージにモジュールをアップロードするには、Bintray がメンテナンスしている Gradle プラグイン、Bintray プラグインを使用する。
+
+```gradle
+buildscript {
+  repositories {
+    jcenter()
+ }
+ dependencies {
+   // bintrayプラグインを利用可能にする
+   classpath "com.jfrog.bintray.gradle:gradle-bintray-plugin:0.5"
+ }
+}
+
+apply plugin: "com.jfrog.bintray" // bintrayプラグインを適用
+
+apply plugin: "java"
+apply plugin: "maven-publish"
+
+group = "com.example"
+version = 0.1
+
+repositories {
+  mavenCentral()
+}
+
+dependencies {
+  compile "org.apache.commons:commons-lang3:3.3.1"
+}
+
+task sourceJar(type: Jar) {
+  from sourceSets.main.allJava // ソースセットを入力ファイルに設定
+}
+
+publishing {
+  publications {
+    mod1(MavenPublication) { // モジュール定義
+      artifactId "my-bintray-module"
+
+      from components.java // ソフトウェアコンポーネント「java」をモジュールに指定する
+      // artifact()メソッドで公開するアーカイブやファイルを指定する
+      artifact sourceJar {
+        classifier "sources"
+      }
+    }
+  }
+}
+
+bintray {
+  user = project.has("bintrayUser") ? bintrayUser : "" // Bintray アカウント名
+  key = project.has("bintrayKey") ? bintrayKey : "" // Bintray APIキー
+  publications = ["mod1"] // Bintrayへアップロードするモジュール
+  publish = true
+  pkg {  // アップロード先のBintrayパッケージ情報
+    repo = "test1"
+    name = "my-pkg"
+  }
+}
+```
+
+Bintray プラグインの設定を行う `bintray` ブロック内で、`publications` プロパティに Maven Publish プラグインの `MavenPublication` で宣言したモジュールのうち Bintray にアップロードしたいものを指定する。`pkg` ブロックにアップロード先の Bintray パッケージ情報を設定する。`user`, `key` には Bintray の認証情報を設定する。
+
+セキュリティの観点から、認証情報はビルドスクリプトには直接書き込まず、プロパティから読み出すようにして、`~/.gradle/gradle.properties` や環境変数などから取得するようにしたほうが良い。
+
+### アップロードしたモジュールの公開
+
+Bintray サイト上で Publish ボタンを押せば公開される。ビルドスクリプトの `bintray` ブロックで `publish` プロパティに `true` を設定することでアップロード後に自動で公開することもできる。
+
+### アップロードしたモジュールを使用する
+
+`http://dl.bintray.com/<account>/<repository>` でアクセスできるようになるので、ビルドスクリプトのリポジトリ定義にこれを指定する。
+
+```gradle
+apply plugin: "application"
+mainClassName = "com.example.Client"
+
+apply plugin: "java"
+
+repositories {
+  // com.example:my-bintray-module:0.1の依存ライブラリを取得する先
+  jcenter()
+
+  // com.example:my-bintray-module:0.1を取得する先
+  maven {
+    // http://dl.bintray.com/<アカウント名>/<リポジトリ名>
+    url "http://dl.bintray.com/gradle-book/test1"
+  }
+}
+
+dependencies {
+  compile "com.example:my-bintray-module:0.1"
+}
+```
+
+#### 別パッケージに同じモジュールはアップロードできない
+
+Bintray 上の別パッケージに同じモジュールをアップロードしようとしても、409 Conflict とエラーが返却される。モジュールの利用側では Bintray 上のパッケージは意識しないため、モジュールが一意である必要がある。
+
+### JCenter Maven リポジトリへの公開
+
+JCenter は、Bintray 上の Maven Central リポジトリと言って良い。このリポジトリにアップロードされているモジュールは `jcenter()` を呼び出すだけで利用できる。モジュールの利用側がビルドスクリプトの中でリポジトリを多数定義するのは煩雑なので、できれば JCenter や Maven Central リポジトリにモジュールを公開するのが良い。
+
+JCenter に公開するためには、Bintray 上のリポジトリを JCenter リポジトリからリンクしてもらう形式を取る。Bintray 上の管理 UI から Add to JCenter ボタンを押して申請することでリンクできる。申請にはコメントが必要なので記入して申請ボタンを押す。数日後には公開されているはず。
+
+## Maven Central リポジトリへの公開
+
+Maven Publish プラグインは Meven Central リポジトリへの公開には対応しておらず、方法としては Bintray と Maven Publish プラグインを組み合わせて行う方法がある。
+
+### 公開できるモジュールの要件
+
+* モジュールの POM に次の要素が設定されていること
+    * `<modelVersion>`
+    * `<groupId>`
+    * `<artifactId>`
+    * `<version>`
+    * `<packaging>`
+    * `<name>`
+    * `<description>`
+    * `<url>`
+    * `<licenses>`
+    * `<scm>`
+        * `<url>`
+    * `<scm>`
+        * `<connection>`
+    * `<developers>`
+* モジュールにソースコード JAR が含まれていること
+    * ソースコード JAR のファイル名は `<artifactId>-<version>-sources.jar` であること
+* モジュールに Javadoc JAR が含まれていること
+    * Javadoc JAR のファイル名は `<artifactId>-<version>-javadoc.jar` であること
+* モジュールに含まれる全てのアーティファクトが PGP 署名されていること。
+    * その署名の公開鍵が `hkp://pool.sks-keyservers.net/` で配布されていること
+
+最後の PGP 署名に関する要件以外は、Maven Publish プラグインの機能でクリアできる。
+
+### Maven Central リポジトリへの公開手順
+
+Maven Publish プラグインはアーティファクトの署名に対応していないので、前項の最後の要件が満たせない。ただし、Bintray が以下の機能を持っているのでこれを利用して Maven Central リポジトリへモジュールをアップロードできる。
+
+* Bintray パッケージ上にアップロードされたモジュールのファイル全てに署名する
+* JCenter へリンクしたモジュールを Maven Central リポジトリへ同期する
+
+### 公開前の準備作業
+
+#### POM の整備
+
+```gradle
+publishing {
+  publications {
+    mod1(MavenPublication) {
+      from components.java
+
+      final customPom = { // Mavenセントラルリポジトリが要求するPOM
+        packaging "jar"
+        name "Gradle XXX Plugin"
+        url "https://example.com/module-site/xxx"
+        description "This is a sample module for mvn central."
+        licenses {
+          license {
+            name "The Apache Software License, Version 2.0"
+            url "http://www.apache.org/licenses/LICENSE-2.0.txt"
+            distribution "repo"
+          }
+        }
+        scm {
+          url "https://github.com/xxx/xxx"
+          connection "https://github.com/xxx/xxx"
+        }
+        developers {
+          developer {
+            id "my-name-id"
+            name "Taro Gradle"
+            email "xxx@example.com"
+          }
+        }
+      }
+      customPom.resolveStrategy = Closure.DELEGATE_FIRST
+
+      pom.withXml { xml ->
+        final root = xml.asNode()
+        root.children().last() + customPom
+      }
+    }
+  }
+}
+```
+
+#### ソースコード JAR、Javadoc JAR の添付
+
+```gradle
+task sourcesJar(type: Jar) { // ソースコードJARの作成タスク
+  from sourceSets.main.allJava // ソースセットを入力ファイルに設定
+  classifier = "sources"
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) { // Javadoc JARの作成タスク
+  classifier 'javadoc'
+  from javadoc.destinationDir // Javadocのターゲットディレクトリを入力ファイルに設定
+}
+
+jar.dependsOn sourcesJar, javadocJar // jarタスク実行時にソースコードJARとJavadoc JARも作成する
+
+publishing {
+  publications {
+    mod1(MavenPublication) {
+      from components.java
+      artifact sourcesJar // ソースコードJARをモジュールに含める
+      artifact javadocJar // Javadoc JARをモジュールに含める
+```
+
+ここまでで、署名を除きモジュールの準備が完了した。
+
+#### 署名に使う鍵ペアを用意する
+
+モジュールの署名は、Bintray にアップロードした後、Bintray に実行してもらう。そのためまず署名に使う鍵を作成し、Bintray に送信する必要がある。また、署名の公開鍵をキーサーバーにアップロードして他システムが参照できるようにする。
+
+署名に使う鍵ペアは、GnuPG（GPG）で作成できる。`gpg` コマンドがインストールされていない場合、[GnuPG のサイト](https://www.gnupg.org/download/)からダウンロード、インストールできる。
+
+```console
+$ gpg --version
+```
+
+#### GPG による鍵の作成
+
+```console
+$ gpg --gen-key
+```
+
+途中で鍵の種類や鍵長、有効期限などいろいろ聞かれるが全てデフォルトで構わない。`Real name`、`Email address`、`Comment` はモジュールのユーザーが署名を確認する際に参考にすると思われるのでわかりやすいものを入力する。最後にパスフレーズを入力して鍵の作成は終了。
+
+正しく鍵が作成できたかどうかは、以下のコマンドで確認できる。
+
+```shell-session
+$ gpg --list-keys  # 鍵束に追加された公開鍵の一覧を表示
+/Users/xxx/.gnupg/pubring.gpg  # 鍵束ファイルの場所
+```
+
+#### 鍵ペアを Bintray へ送信する
+
+Bintray に鍵ペアを保存しておくと、その鍵でアップロードしたパッケージ内のモジュールに署名できるようになる。鍵を Bintray に送信するには、Bintray のアカウント情報編集ページで、先ほど作成した鍵を入力する。
+
+ここで入力する鍵は *ASCII Armored* と呼ばれる文字列形式の鍵データ。次のコマンドで取得できる。
+
+```console
+# 秘密鍵の表示
+$ gpg -a --export-secret-key EF401D1D # EF401D1D は鍵の ID
+
+# 公開鍵の表示
+$ gpg -a --export EF401D1D # EF401D1D は鍵の ID
+```
+
+#### 公開鍵をキーサーバーへ送信する
+
+Maven Central リポジトリやモジュールのユーザーが署名を検証できるようにするため、署名の公開鍵をキーサーバーへアップロードしておく必要がある。Maven Central リポジトリが指定するキーサーバーは次の通り。
+
+    hkp://pool.sks-keyservers.net
+
+次のコマンドで、作成した公開鍵をキーサーバーへアップロードする。
+
+```console
+$ gpg --keyserver hkp://pool.sks-keyservers.net --send-keys EF401D1D
+```
+
+`--keyserver` オプションにキーサーバーの場所を、`--send-keys` オプションに送信したい鍵の ID を指定する。
+
+これで、Maven Central リポジトリへアップロードするモジュールと署名に使う鍵ペアの準備が完了した。
+
+### Bintray へモジュールをアップロードする
+
+```gradle
+buildscript {
+  repositories {
+    jcenter()
+  }
+  dependencies {
+    classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:0.5'
+  }
+}
+
+bintray {
+  user = bintrayUser
+  key = bintrayKey
+  publications = ["mod1"]
+  pkg {
+    repo = "test1"
+    name = "my-pkg-2"
+  }
+}
+```
+
+```console
+$ gradle bintrayUpload
+```
+
+### モジュールに署名する
+
+Bintray でモジュールに署名するには、Bintray サイト上のリポジトリ設定画面で署名機能を有効にする。Sign this repository's files with key from: ... にチェックを入れる。
+
+リポジトリの操作やパッケージの作成など、Bintray サイト上で行うこともできるが、殆どの操作を REST API を通して行うこともできる。モジュールの署名は以下の API で実行できる。
+
+```
+POST /gpg/<account>/<repository>/<package>/versions/<署名するバージョン>
+{
+  "passphrase": "<アップロードした鍵のパスフレーズ>"
+}
+```
+
+Gradle には HTTP クライアントが組み込まれているので、次のようなタスクを作れば上記の REST API を叩いてモジュールに署名できる。
+
+```gradle
+// BintrayのREST APIを叩いてアップロードしたモジュールに署名するタスク
+task signBintrayPackage << {
+  final http = new HTTPBuilder(bintray.apiUrl) // 「bintray」はBintrayプラグインにより設定されるプロパティ
+
+  // BASIC認証
+  http.auth.basic bintrayUser, bintrayKey
+
+  // BintrayのREST APIに対するリクエスト
+  http.request(POST, JSON) {
+    uri.path = "/gpg/${bintrayUser}/${bintray.pkg.repo}/${bintray.pkg.name}/versions/${project.version}"
+    body = [passphrase: signKeyPassphrase]
+    response.success = { resp ->
+      logger.info("Signed version ${project.version}.")
+    }
+    response.failure = { resp ->
+      throw new GradleException("Could not sign version ${project.version}: $resp.statusLine")
+    }
+  }
+}
+```
+
+この `signBintrayPackage` タスクを実行すると、先ほど Bintray にアップロードしたファイルに署名することができる。Bintray サイト上でパッケージの詳細画面を開くと、`*.asc` のファイルが登録されているはず。これが署名ファイル。
+
+### JCenter へ公開する
+
+これで Maven Central リポジトリへ公開するモジュールの準備は署名も含めて全て完了した。Bintray から Maven Central リポジトリへモジュールを送信するには、まず JCenter へモジュールを公開する必要がある。
+
+### Maven Central リポジトリへ公開する
+
+#### 公開申請
+
+JCenter から Maven Central リポジトリへモジュールをアップロードするには、アップロードしたいモジュールの `groupId` に対して Sonatype OSS のアップロード権限が必要。権限の申請は、*issues.sonatype.org* に所定の形式で JIRA チケットを作成して行う。承認までの期間はだいたい1〜2営業日ほど。
+
+#### モジュールを JCenter から Maven Central リポジトリへ転送する
+
+Maven Central リポジトリへのアップロードが許可されれば、JCenter から Maven Central リポジトリへモジュールを転送できる。Bintray のパッケージ画面を開き、Maven Central を選択すると、認証情報を入力するページが表示されるので、Sonatype OSS の username と password を入力して Sync ボタンを押す。

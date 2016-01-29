@@ -355,3 +355,169 @@ class MyTaskTests {
 
 ### カスタムプラグインの作成
 
+*  異なるプロジェクトで複数のカスタムタスクを共有したい場合
+*  複数のタスクを強調させたい場合
+*  ファイルの配置場所やタスクの設定方法に法則性をもたせることで何らかのビルドシステム上の概念を共有したい場合
+
+などは、カスタムプラグインを作成すると良い。
+
+例えば Java プラグインは、Java ソースをコンパイルするタスクや JAR ファイルを作成するタスクなど複数のタスクを追加するだけでなく、それらのタスク間の適切な依存関係を設定する。また、ソースセットのデフォルト配置場所や設定用ブロックなどを追加して Java システムのビルドに関する概念を表現している。
+
+Gradle のプラグインは `org.gradle.api.Plugin` インターフェースを実装したクラスとして表現される。`Plugin` インターフェースはデフォルトでビルドスクリプトにインポートしてあるため、`import` で明示的にインポートする必要はない。
+
+```gradle
+// build.gradle
+
+apply plugin: GreetingPlugin // カスタムプラグインを適用
+
+class GreetingPlugin implements Plugin<Project> { // Pluginを実装したカスタムプラグインクラス
+  void apply(Project project) { // このプラグインが適用されたときに呼び出されるメソッド
+    project.task("greet") << { // 適用されたプロジェクトに「greet」タスクを追加
+      println "Hello, world!"
+    }
+  }
+}
+```
+
+`Plugin` インターフェースを実装したカスタムプラグインを適用する際は、`apply plugin` で作成したプラグインクラスを適用する。プラグインクラスは、カスタムタスクと同様にビルドスクリプトから見えるところであればどこにでも置くことができる。
+
+* 同じビルドスクリプトの中
+* JAR ファイルにして `buildscript` ブロックの中で読み込む
+* `buildSrc` ディレクトリにソースファイルを置いておく
+
+などの方法で共有できる。
+
+プラグインが適用されると、適用されたプロジェクトを引数にしてプラグインクラスの `apply()` が呼び出される。このメソッドにプラグインで実際にやりたいことを記述していく。
+
+ビルドスクリプトの中でタスクの追加やプラグインの適用など様々な操作を行ってきたが、それらはすべて `Project` オブジェクトに対する操作と言える。そのためビルドスクリプトの中でできることは全てプラグインクラスの中でも実現できる。
+
+#### プラグインに対する設定方法を提供する
+
+Gradle のプラグインはすべてエクステンションオブジェクトという仕組みによって統一されたインターフェースで設定が行えるようになっている。例えば Java プラグインを適用すると、`jar` ブロックを使えるようになり、War プラグインを適用すると `war` ブロックが使用できるようになる。こういった設定ブロックを使用できるようにする仕組みがエクステンションオブジェクト。
+
+```gradle
+apply plugin: GreetingPlugin // カスタムプラグインを適用
+
+greeting { // GreetingPluginにより追加されたgreetingブロック
+  message("Hi", "world")
+}
+
+ // Pluginを実装したカスタムプラグインクラス
+class GreetingPlugin implements Plugin<Project> {
+   // このプラグインが適用されたときに呼び出されるメソッド
+  void apply(Project project) {
+    // プロジェクトにgreeting extensionを追加
+    project.extensions.create("greeting", GreetingExtension)
+    // プロジェクトに「greet」タスクを追加
+    project.task("greet") << {
+      println "${project.greeting.greeting}, ${project.greeting.target}!"
+    }
+  }
+}
+
+// greeting extensionを表現するクラス
+class GreetingExtension {
+  String greeting
+  String target
+  void message(greeting, target) {
+    this.greeting = greeting
+    this.target = target
+  }
+}
+```
+
+エクステンションオブジェクトを作成するには、`Project#extensions.create()` にエクステンション名とエクステンションを表すクラスを渡す。作成したエクステンションオブジェクトは、プラグインを適用することでビルドスクリプトにも公開されるため、ビルドスクリプトからは `Project#extensions.create()` に渡したエクステンション名と同名のブロックを使ってアクセスできるようになる。ブロック形式でもアクセスできるし、プロパティ形式でアクセスすることも可能。
+
+#### プラグインを ID で指定する
+
+これまでカスタムプラグインを適用する際にクラスを指定して適用していた。
+
+```gradle
+apply plugin: GreetingPlugin
+```
+
+一方、Java プラグインを適用する際はクラス名ではなくプラグインの ID を文字列で指定していた。
+
+```gradle
+apply plugin: "java"
+```
+
+Java プラグインの実体は `org.gradle.api.plugins.JavaPlugin` という Gradle に同梱されているクラス。`"java"` というプラグイン ID と `org.gradle.api.plugins.JavaPlugin` クラスが結び付けられているために `apply pllugin: "java"` という構文でプラグインが適用できている。
+
+プラグインクラスとプラグイン ID を結びつけるには、プラグインの実装が含まれる JAR ファイルの次の場所にプロパティファイルを配置する。
+
+    META-INF/gradle-plugins/<プラグインID>.properties
+
+プロパティファイルでは次のように設定を行う。
+
+```
+implementation-class=GreetingPlugin
+```
+
+こうすることで、プロパティファイルの名前をプラグイン ID として指定できるようになる。
+
+```gradle
+apply plugin: "greeting"
+```
+
+`buildSrc` ディレクトリ内にプラグインクラスを配置している場合は、次の場所にプロパティファイルを配置する。
+
+    buildSrc/src/main/resources/META-INF/gradle-plugins/<プラグインID>.properties
+
+ただし、プラグイン ID で指定させたいケースというのは一般的にスタンドアロンの Java プロジェクトでプラグインを JAR ファイルとして広く配布するときなので、`buildSrc` ディレクトリ内にプラグインの実装を置くようなケースでは、プラグインクラスを指定してプラグインを適用する運用で十分。
+
+#### プラグイン ID と名前空間
+
+Gradle 2.1 から、Gradle プラグインのポータルサイト（http://plugins.gradle.org/）が開設され、ポータルサイトとの連携機能も Gradle で利用できるようになった。以下の様な記法でポータルサイトのプラグインを使用できる。
+
+```gradle
+plugins {
+    id "com.example.greeting" version "0.1"
+}
+```
+
+自作のカスタムプラグインをポータルサイトに登録する場合、プラグイン ID の競合が起こらないように ID に名前空間を含めるよう要求される。
+
+名前空間は Java のパッケージ名と同様、`.` で句切られた文字列。その他プラグイン ID は次の規約に従う必要がある。
+
+* `.`, `-`, 英数字から構成される文字列であること
+* 少なくとも1つの `.` を含むこと
+* 慣習的に、名前空間に大文字は使用されず、さらにドメイン名で予約された文字列が使用される
+* 慣習的に、プラグイン名に大文字は使用されない
+* `org.gradle`, `com.gradleware` という名前空間は Gradle に予約されていて使用できない
+* `.` で始まる文字列は使用できない
+* `.` を連続して使用することはできない
+
+基本的に Java のパッケージ名の規約と似ているが、パッケージ名ほど長く詳しい物にする必要はなく、プラグインの開発元とプラグイン名が同定できれば十分。
+
+なお、`plugins` ブロックは、Java プラグインなどの組み込みプラグインかポータルサイトのプラグインを使用するときにしか使えないので、プラグインをポータルサイトに登録する予定がない場合は名前空間を指定する必要はない。
+
+#### プラグインのテスト
+
+プラグインのテストは、タスククラスのテスト同様に `ProjectBuilder` クラスを使用して記述できる。
+
+```gradle
+import org.junit.Test
+import static org.junit.Assert.assertTrue
+import org.gradle.api.DefaultTask
+import org.gradle.testfixtures.ProjectBuilder
+
+class GreetingPluginTests {
+    @Test
+    void helloWorldTest() {
+        final project = ProjectBuilder.builder().build()    // Gradle プロジェクトの作成
+        project.apply plugin: GreetingPlugin    // テスト対象プラグインの適用
+        final task = project.tasks.greet    // プラグインによって追加されたタスクの取得
+        
+        assertTrue(task instanceof DefaultTask)
+    }
+}
+```
+
+プラグインの作成には、他にも
+
+* スタンドアロンの Gradle プロジェクトを作成し、プラグインクラスをパッケージした JAR ファイルを作成する方法
+* エクステンションオブジェクトのコレクション管理
+
+など様々なトピックがある。
+

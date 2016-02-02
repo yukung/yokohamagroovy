@@ -521,3 +521,9 @@ class GreetingPluginTests {
 
 など様々なトピックがある。
 
+## リモートサーバの操作
+
+Gradle SSH Plugin を使って Gradle タスクとして SSH を実行することができる。詳しいことは Gradle SSH Plugin のサイトを参照。
+
+## プロキシの設定
+

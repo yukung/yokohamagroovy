@@ -527,3 +527,31 @@ Gradle SSH Plugin を使って Gradle タスクとして SSH を実行するこ�
 
 ## プロキシの設定
 
+プロキシを経由しないとインターネットに接続できないような環境で Gradle を利用する場合、依存関係が解決できなかったり、Gradle ラッパーによる Gradle 本体のダウンロードなどが失敗する。
+
+Gradle では、JavaVM にプロキシに必要なシステムプロパティを渡すことで、この問題を回避することができる。
+
+システムプロパティはビルドスクリプト内で設定することもできるが、以下のディレクトリに `gradle.properties` を配置して取得する方法が良い。
+
+* プロジェクトディレクトリ直下の `.gradle/`
+* ホームディレクトリ直下の `.gradle/`
+
+このファイルでプロキシ設定しておくと、Gradle 自体の動作だけでなく、Gradle ラッパーが Gradle をダウンロードするときにも適用されるため。
+
+```
+# PROJECT_HOME/gradle.properties
+
+systemProp.http.proxyHost=proxy.example.com
+systemProp.http.proxyPort=8080
+systemProp.http.proxyUser=userid
+systemProp.http.proxyPassword=password
+# プロキシを省略して直接到達するホストのリスト。`|` で句切られた正規表現のリスト
+systemProp.http.nonProxyHosts=*.nonproxyrepos.com|localhost
+
+# SSL(https)用の設定
+systemProp.https.proxyHost=proxy.example.com
+systemProp.https.proxyPort=8080
+systemProp.https.proxyUser=userid
+systemProp.https.proxyPassword=password
+```
+

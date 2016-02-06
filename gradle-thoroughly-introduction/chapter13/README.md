@@ -590,3 +590,33 @@ allprojects {
 ```
 
 この独自 Gradle を使ってビルドすると、ビルド実行前に上記コードが実行され、全てのプロジェクトにリポジトリが設定される。つまり、ビルドスクリプトの方でリポジトリをいちいち設定する必要がなくなる。
+
+### Gradle ラッパーを使った独自 Gradle の配布
+
+Gradle ラッパーのスクリプトはプロジェクトに同梱すると Gradle 本体がインストールされていなくても Gradle 実行時に本体をダウンロードして実行することができる。
+
+そしてラッパースクリプトがダウンロードする Gradle の URL は設定で変更できるため、上記で作成した独自 Gradle をダウンロードするように設定すれば、わざわざ共有フォルダにアクセスしてもらわなくても自動化することができ、混乱を招かずに使いはじめることができるようになる。以下は `gradle/wrapper/gradle-wrapper.properties` の例。
+
+```
+gradleVersion=preconfigure-repository
+archiveBase=PROJECT
+archivePath=wrapper/dists
+distributionBase=PROJECT
+distributionPath=wrapper/dists
+zipStoreBase=PROJECT
+zipStorePath=wrapper/dists
+distributionUrl=https://dist-gradle.example.com/gradle-preconfigure-repository-bin.zip
+```
+
+`distributionUrl` プロパティに、ビルドを実行する時に使用する Gradle のダウンロード URL を指定している。この URL に社内サーバー上の独自 Gradle の場所を指定することで、そのビルドで常にその独自 Gradle を使わせることができるというわけ。
+
+他にも、Gradle のプロキシ設定を社内すべてのプロジェクトでいちいち行いたくないという場合は、`init.d/xxx.gradle` に次のようなコードを書くことで予め設定して共有することができる。
+
+```gradle
+System.setProperty("http.proxyHost", "proxy.example.com")
+System.setProperty("http.proxyPort", "8080")
+System.setProperty("http.nonProxyHosts", "127.0.0.1|localhost")
+```
+
+ほかにも、社内共通プラグインを適用したり、あるライブラリやあるバージョンの使用を禁止したり、あるバージョンの使用を強制したりといった様々なルールを同梱できる。
+

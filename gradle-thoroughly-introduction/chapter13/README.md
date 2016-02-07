@@ -620,3 +620,24 @@ System.setProperty("http.nonProxyHosts", "127.0.0.1|localhost")
 
 ほかにも、社内共通プラグインを適用したり、あるライブラリやあるバージョンの使用を禁止したり、あるバージョンの使用を強制したりといった様々なルールを同梱できる。
 
+## Gradle のアップデート
+
+Gradle がアップデートした時、アップデート前にビルドしたバイナリとアップデート後にビルドしたバイナリが本当に同じものかどうかを比較することができる。
+
+`compare-gradle-builds` プラグインを使うと、それが実現できる。
+
+```gradle
+// ビルド比較プラグインの適用
+apply plugin: 'compare-gradle-builds'
+
+compareGradleBuilds { // ビルド比較プラグインの設定ブロック
+  sourceBuild { // 比較元ビルド
+    projectDir "project-a" // ビルドのルートディレクトリ
+    gradleVersion "1.12"   // ビルドに使用するGradleバージョン
+  }
+  targetBuild { // 比較先ビルド
+    projectDir "project-b" // ビルドのルートディレクトリ
+    gradleVersion "2.0"    // ビルドに使用するGradleバージョン
+  }
+}
+```

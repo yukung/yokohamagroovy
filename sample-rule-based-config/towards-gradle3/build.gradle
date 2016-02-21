@@ -5,6 +5,5 @@ plugins {
 model {
     components {
         main(JvmLibrarySpec)
-        sub(JvmLibrarySpec)
     }
 }
